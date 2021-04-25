@@ -38,7 +38,7 @@ namespace Riven_Script_Editor.Tokens
 
         static Regex terminator_regex = new Regex(@"(%[%ABCDEKNPpSTV0-9]*?)$");
 
-        public TokenSysMessage(byte[] byteCommand, int pos, bool blank = false) : base(byteCommand, pos)
+        public TokenSysMessage(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank = false) : base(wrapper, byteCommand, pos)
         {
 
             MsgPtr = BitConverter.ToUInt16(byteCommand, 2);
@@ -46,7 +46,7 @@ namespace Riven_Script_Editor.Tokens
             _command = "Sys Message";
             _description = " Some kind of Sys message, not sure";
 
-            MessageJp = Tokenizer.ReadString(MsgPtr);
+            MessageJp = _dataWrapper.ReadString(MsgPtr);
             if (blank)
             {
                 fixed1 = 0;
@@ -60,10 +60,10 @@ namespace Riven_Script_Editor.Tokens
             else
             {
                 fixed1 = 0;
-                CompleteMessage = Tokenizer.ReadString(MsgPtr);
+                CompleteMessage = _dataWrapper.ReadString(MsgPtr);
 
-                MsgId = Tokenizer.ReadUInt16(4);
-                VoiceId = Tokenizer.ReadUInt16(6);
+                MsgId = _dataWrapper.ReadUInt16(4);
+                VoiceId = _dataWrapper.ReadUInt16(6);
                 //SpeakerId = (MsgSpeaker)Tokenizer.ReadUInt16(8); if (!Enum.IsDefined(typeof(MsgSpeaker), SpeakerId)) throw new ArgumentOutOfRangeException();
             }
 
@@ -104,22 +104,9 @@ namespace Riven_Script_Editor.Tokens
                 Message = CompleteMessage;
 
             // Remove double spaces
-            Message = Tokenizer.StringSingleSpace(Message);
+            Message = Utility.StringSingleSpace(Message);
 
             UpdateData();
-        }
-
-        public override byte[] GetBytes()
-        {
-            byte[] output = new byte[_length];
-            output[0] = (byte)Type;
-            output[1] = (byte)fixed1;
-            BitConverter.GetBytes(MsgPtr).CopyTo(output, 2);
-            BitConverter.GetBytes(MsgId).CopyTo(output, 4);
-            BitConverter.GetBytes(VoiceId).CopyTo(output, 6);
-            BitConverter.GetBytes((UInt16)SpeakerId).CopyTo(output, 8);
-
-            return output;
         }
 
         public override string GetMessages()
@@ -131,7 +118,7 @@ namespace Riven_Script_Editor.Tokens
 
         public override byte[] GetMessagesBytes()
         {
-            byte[] msg = Tokenizer.StringEncode(CompleteMessage);
+            byte[] msg = Utility.StringEncode(CompleteMessage);
             byte[] output = new byte[msg.Length + 1];
             msg.CopyTo(output, 0);
 
@@ -141,12 +128,12 @@ namespace Riven_Script_Editor.Tokens
         public override int SetMessagePointer(int offset)
         {
             MsgPtr = (UInt16)offset;
-            return offset + Tokenizer.StringEncode(CompleteMessage).Length + 1;
+            return offset + Utility.StringEncode(CompleteMessage).Length + 1;
         }
 
         public override void UpdateData()
         {
-            string message_spacing = Tokenizer.StringDoubleSpace(Message);
+            string message_spacing = Utility.StringDoubleSpace(Message);
 
             if (Speaker.Length > 0)
                 //CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
@@ -157,18 +144,15 @@ namespace Riven_Script_Editor.Tokens
             Data2 = MessageJp;
         }
 
-        public override void UpdateGui()
+        public override void UpdateGui(MainWindow window)
         {
-            base.UpdateGui();
-            base.AddTextbox("Speaker", "Speaker");
-            base.AddRichTextbox("Message", "Message");
-            base.AddTextbox("Terminator", "MessageEnding");
-            base.AddRichTextbox("Complete Text", "MessageJp");
-            base.AddTranslationButton("Translation", "MessageJp");
-            base.AddSpacer();
-            //base.AddUint16("Msg ID", "MsgId");
-            //base.AddUint16("Voice ID", "VoiceId");
-            //base.AddCombobox<MsgSpeaker>("Speaker ID", "SpeakerId");
+            base.UpdateGui(window);
+            base.AddTextbox(window, "Speaker", "Speaker");
+            base.AddRichTextbox(window, "Message", "Message");
+            base.AddTextbox(window, "Terminator", "MessageEnding");
+            base.AddRichTextbox(window, "Complete Text", "MessageJp");
+            base.AddTranslationButton(window, "Translation", "MessageJp");
+            base.AddSpacer(window);
         }
     }
 }

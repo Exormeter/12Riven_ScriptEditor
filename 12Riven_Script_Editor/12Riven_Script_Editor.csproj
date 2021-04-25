@@ -35,6 +35,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="IntervalTree, Version=3.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\RangeTree.3.0.0\lib\net45\IntervalTree.dll</HintPath>
+    </Reference>
     <Reference Include="Microsoft.WindowsAPICodePack, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\WindowsAPICodePack-Core.1.1.1\lib\Microsoft.WindowsAPICodePack.dll</HintPath>
     </Reference>
@@ -89,6 +92,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Tokenizer\DataTokenizer.cs" />
     <Compile Include="FileTypes\AFS.cs" />
     <Compile Include="ExceptionPopup.cs">
       <SubType>Form</SubType>
@@ -100,14 +104,24 @@
     <Compile Include="FileTypes\LzssCompress.cs" />
     <Compile Include="Themes\DarkBlend\LeftMarginMultiplierConverter.cs" />
     <Compile Include="Themes\DarkBlend\TreeViewItemExtensions.cs" />
+    <Compile Include="Tokenizer\DataWrapper.cs" />
+    <Compile Include="Tokenizer\ATokenizer.cs" />
+    <Compile Include="Tokens\TokenDataRoute2.cs" />
+    <Compile Include="Tokens\TokenDataChunk.cs" />
+    <Compile Include="Tokens\TokenDataTitleName.cs" />
+    <Compile Include="Tokens\TokenDataString.cs" />
+    <Compile Include="Tokens\TokenDataRoute.cs" />
+    <Compile Include="Tokens\TokenDataSceneName.cs" />
+    <Compile Include="Tokens\TokenDataName.cs" />
     <Compile Include="Tokens\Token.cs" />
     <Compile Include="Tokens\TokenSysMessage.cs" />
     <Compile Include="Tokens\TokenHeader.cs" />
-    <Compile Include="Tokens\Tokenizer.cs" />
+    <Compile Include="Tokenizer\ScriptTokenizer.cs" />
     <Compile Include="Tokens\TokenSelectDisp2.cs" />
     <Compile Include="Tokens\TokenSelectDisp.cs" />
     <Compile Include="Tokens\TokenMsgDisp2.cs" />
     <Compile Include="Tokens\TokenQuickSave.cs" />
+    <Compile Include="Utility.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>

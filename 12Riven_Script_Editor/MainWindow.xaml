@@ -14,6 +14,7 @@
                 <MenuItem Header="_File">
                     <MenuItem Header="Save current file (Ctrl+S)" Click="Menu_File_Save"/>
                     <MenuItem Header="Export SCENE00.afs (Ctrl+E)" Click="Menu_Export_Mac"/>
+                  <MenuItem Header="Export file as TXT" Click="Menu_Export_Txt"/>
                 </MenuItem>
                 <MenuItem Header="_Edit">
                     <MenuItem Header="Find (Ctrl+F)" Click="SearchFocus"/>
@@ -126,13 +127,13 @@
 
             <ListBox Grid.Row="2" Grid.Column="0" x:Name="listviewEntries" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" RenderTransformOrigin="0.5,0.5" Margin="0"/>
 
-            <ListView Grid.Row="0" Grid.Column="2" x:Name="ListView1" MinWidth="777" ItemsSource="{Binding MyListItems}" SelectionChanged="ListView1_SelectionChanged" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Margin="0">
+            <ListView Grid.Row="0" Grid.Column="2" x:Name="TokenListView" MinWidth="777" ItemsSource="{Binding MyListItems}" SelectionChanged="ListView1_SelectionChanged" RenderTransformOrigin="0.5,0.5" HorizontalContentAlignment="Stretch" VerticalContentAlignment="Stretch" Margin="0">
                 <ListView.View>
                     <GridView>
                         <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Offset}"/>
                         <GridViewColumn Header="Length" Width="50" DisplayMemberBinding="{Binding Length}"/>
                         <GridViewColumn Header="Command" Width="100" DisplayMemberBinding="{Binding Command}"/>
-                        <GridViewColumn Header="Data1" Width="200" DisplayMemberBinding="{Binding Data}"/>
+                        <GridViewColumn Header="Data1" Width="100" DisplayMemberBinding="{Binding Data}"/>
                         <GridViewColumn Header="Message" Width="600" DisplayMemberBinding="{Binding Data2}"/>
                         <GridView.ColumnHeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">

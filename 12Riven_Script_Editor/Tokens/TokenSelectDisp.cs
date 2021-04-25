@@ -12,47 +12,28 @@ namespace Riven_Script_Editor.Tokens
         UInt16 fixed1;
         public List<SelectDispEntry> Entries = new List<SelectDispEntry>();
 
-        public TokenSelectDisp(byte[] byteCommand, int pos): base(byteCommand, pos)
+        public TokenSelectDisp(DataWrapper wrapper, byte[] byteCommand, int pos): base(wrapper, byteCommand, pos)
         {
             _command = "Select Disp";
             _description = "Display choices [@TODO: Fix jump/label handling]";
-            num_entries = Tokenizer.ReadUInt8(1);
+            num_entries = _dataWrapper.ReadUInt8(1);
 
             fixed1 = 0x6009;
 
             for (int i=0; i<num_entries; i++)
             {
                 var entry = new SelectDispEntry();
-                entry.MsgPtr = Tokenizer.ReadUInt16(i * 8 + 4);
-                entry.JumpAddress = Tokenizer.ReadUInt16(i * 8 + 6);
-                entry.Unknown = Tokenizer.ReadUInt16(i * 8 + 8);
-                entry.ChoiceId = Tokenizer.ReadUInt16(i * 8 + 10);
+                entry.MsgPtr = _dataWrapper.ReadUInt16(i * 8 + 4);
+                entry.JumpAddress = _dataWrapper.ReadUInt16(i * 8 + 6);
+                entry.Unknown = _dataWrapper.ReadUInt16(i * 8 + 8);
+                entry.ChoiceId = _dataWrapper.ReadUInt16(i * 8 + 10);
 
-                entry.Message = Tokenizer.ReadString(entry.MsgPtr);
+                entry.Message = _dataWrapper.ReadString(entry.MsgPtr);
                 Entries.Add(entry);
             }
 
             //UpdateData();
-        }
-
-        public override byte[] GetBytes()
-        {
-            byte[] output = new byte[_length];
-            output[0] = (byte)Type;
-            output[1] = (byte)num_entries;
-            BitConverter.GetBytes(fixed1).CopyTo(output, 2);
-            for (int i = 0; i < num_entries; i++)
-            {
-                var e = Entries[i];
-                BitConverter.GetBytes(e.MsgPtr).CopyTo(output, i * 8 + 4);
-                BitConverter.GetBytes(e.JumpAddress).CopyTo(output, i * 8 + 6);
-                BitConverter.GetBytes(e.Unknown).CopyTo(output, i * 8 + 8);
-                BitConverter.GetBytes(e.ChoiceId).CopyTo(output, i * 8 + 10);
-            }
-
-            return output;
-        }
-
+        } 
         public override string GetMessages()
         {
             string msg = "";
@@ -71,7 +52,7 @@ namespace Riven_Script_Editor.Tokens
 
             foreach (var e in Entries)
             {
-                msg = Tokenizer.StringEncode(e.Message);
+                msg = Utility.StringEncode(e.Message);
                 messages.Add(msg);
                 len += msg.Length + 1;
             }
@@ -92,7 +73,7 @@ namespace Riven_Script_Editor.Tokens
             {
                 var e = Entries[i];
                 e.MsgPtr = (UInt16)offset;
-                offset += Tokenizer.StringEncode(e.Message).Length + 1;
+                offset += Utility.StringEncode(e.Message).Length + 1;
             }
             return offset;
         }
@@ -111,19 +92,19 @@ namespace Riven_Script_Editor.Tokens
             }
         }
 
-        public override void UpdateGui()
+        public override void UpdateGui(MainWindow window)
         {
-            base.UpdateGui();
-            PopulateEntryList(Entries, (sender, ev) => {
+            base.UpdateGui(window);
+            PopulateEntryList(window, Entries, (sender, ev) => {
                 if (ev.AddedItems.Count == 0 || !(ev.AddedItems[0] is SelectDispEntry))
                     return;
 
-                base.UpdateGui(false);
+                base.UpdateGui(window, false);
                 var e = (SelectDispEntry)ev.AddedItems[0];
-                AddTextbox("Message", "Message", e);
-                AddUint16("JumpAddress", "Unknown1", e);
-                AddUint16("Unknown", "Unknown", e);
-                AddUint16("Choice ID", "ChoiceId", e);
+                AddTextbox(window, "Message", "Message", e);
+                AddUint16(window, "JumpAddress", "Unknown1", e);
+                AddUint16(window, "Unknown", "Unknown", e);
+                AddUint16(window, "Choice ID", "ChoiceId", e);
             });
         }
     }

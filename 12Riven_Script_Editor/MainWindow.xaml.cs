@@ -33,12 +33,21 @@ namespace Riven_Script_Editor
         ObservableCollection<ListViewItem> lvList = new ObservableCollection<ListViewItem>();
         string folder = "";
         string filename = "";
+        bool searchEndOfFile = false;
         Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        ATokenizer Tokenizer;
+        private List<Token> tokenList;
+
+        public Grid Grid;
+        public ListBox EntriesList;
+
+        public bool ChangedFile { get; internal set; }
 
         public MainWindow()
         {
             InitializeComponent();
-
+            Grid = ((MainWindow)Application.Current.MainWindow).GuiArea;
+            EntriesList = ((MainWindow)Application.Current.MainWindow).listviewEntries;
             listviewFiles.ItemsSource = lvList;
             this.Closing += MainWindow_Closing;
 
@@ -66,33 +75,10 @@ namespace Riven_Script_Editor
             checkbox_SearchAllFiles.Unchecked += (sender, ev) => UpdateConfig("search_all_files", "0");
             textbox_search.TextChanged += (sender, ev) => UpdateConfig("last_search", textbox_search.Text);
             textbox_search.KeyDown += Textbox_search_KeyDown;
-
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("EffectEx"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("End"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("ExternalGoto"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("FadeExStart"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("FadeExWait"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("FileRead"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("FileWait"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("GraphDisp"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("GraphDispEx"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("If"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("InternalGoto"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("MsgDisp2"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("MsgType"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("MsgView"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("QuickSave"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("RegCalc"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("SelectDisp2"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("SystemMsg"));
-            //TokenSelectorComboBox.Items.Add(new TokenSelectorComboBoxItem("TimeWait"));
-
-
             BrowseInputFolder(null, null);
 
             AddHotKeys();
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
-            //AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
         }
 
         private void MainWindow_Closing(object sender, CancelEventArgs e)
@@ -116,16 +102,22 @@ namespace Riven_Script_Editor
         private bool CheckUnsavedChanges()
         {
             // Check for file changes, then prompt user to save
-            if (Tokenizer.ChangedFile)
+            if (ChangedFile)
             {
                 MessageBoxResult dialogResult = MessageBox.Show("File changed. Save?", "Unsaved changes", MessageBoxButton.YesNoCancel);
 
                 if (dialogResult == MessageBoxResult.Yes)
-                    Tokenizer.SaveFile(System.IO.Path.Combine(folder, filename));
+                {
+                    string outPath = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content);
+                    byte[] output = Tokenizer.AssembleAsData();
+                    var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
+                    stream_out.Write(output, 0, output.Length);
+                    stream_out.Close();
+                }
                 else if (dialogResult == MessageBoxResult.Cancel)
                     return false;
 
-                Tokenizer.ChangedFile = false;
+                ChangedFile = false;
             }
             return true;
         }
@@ -210,7 +202,7 @@ namespace Riven_Script_Editor
 
             // Populate the list
             
-            string[] filenames = Directory.GetFiles(folder, "*.CMD", SearchOption.TopDirectoryOnly);
+            string[] filenames = Directory.GetFiles(folder, "*.BIN", SearchOption.TopDirectoryOnly);
             foreach (var filename in filenames)
                 lvList.Add(new ListViewItem() { Content = System.IO.Path.GetFileName(filename) });
 
@@ -253,37 +245,14 @@ namespace Riven_Script_Editor
             Search(false);
         }
 
-        //private void AddNode(object sender, RoutedEventArgs e)
-        //{
-        //    // @TODO
-        //    if (ListView1.SelectedIndex > -1)
-        //    {
-        //        if (TokenSelectorComboBox.SelectedIndex > -1)
-        //        {
-        //            var token_combobox_item = (TokenSelectorComboBox.SelectedItem as TokenSelectorComboBoxItem);
-        //            //var token = (Token) Activator.CreateInstance(token_combobox_item.Value);
-        //            var token = Activator.CreateInstance(token_combobox_item.Value, new object[] { (bool)true }) as Token;
-
-        //            int idx = ListView1.SelectedIndex + 1;
-        //            Tokenizer.Tokens.Insert(idx, token);
-        //            CommandViewBox vb = DataContext as CommandViewBox;
-        //            vb.MyListItems.Insert(idx, token);
-
-        //            ListView1.SelectedIndex += 1;
-        //        }
-                
-        //    }
-
-        //}
-
         private void DeleteNode(object sender, RoutedEventArgs e)
         {
-            if (ListView1.SelectedIndex > -1)
+            if (TokenListView.SelectedIndex > -1)
             {
-                int idx = ListView1.SelectedIndex;
-                ListView1.SelectedIndex += 1;
+                int idx = TokenListView.SelectedIndex;
+                TokenListView.SelectedIndex += 1;
 
-                Tokenizer.Tokens.RemoveAt(idx);
+                tokenList.RemoveAt(idx);
                 CommandViewBox vb = DataContext as CommandViewBox;
                 vb.MyListItems.RemoveAt(idx);
             }
@@ -507,7 +476,7 @@ namespace Riven_Script_Editor
 
                 int idx = startIdx;
 
-                while (!Tokenizer.Search(textbox_search.Text, next, (bool)checkbox_SearchCaseSensitive.IsChecked))
+                while (!SearchToken(textbox_search.Text, next, (bool)checkbox_SearchCaseSensitive.IsChecked))
                 {
                     bool success = CheckUnsavedChanges();
                     if (!success)
@@ -532,16 +501,173 @@ namespace Riven_Script_Editor
             }
             else
             {
-                if (!Tokenizer.Search(textbox_search.Text, next, (bool)checkbox_SearchCaseSensitive.IsChecked))
+                if (SearchToken(textbox_search.Text, next, (bool)checkbox_SearchCaseSensitive.IsChecked))
                     MessageBox.Show("End of file");
             }
-            
+        }
+
+        public bool SearchToken(string text, bool next, bool case_sensitive)
+        {
+            int idx = TokenListView.SelectedIndex;
+            if (idx == -1)
+                idx = 0;
+
+            text = Utility.StringDoubleSpace(text);
+            if (!case_sensitive)
+                text = text.ToLower();
+
+            if (searchEndOfFile)
+            {
+                if (next) idx = 0;
+                else idx = TokenListView.Items.Count - 1;
+                searchEndOfFile = false;
+            }
+
+            while (true)
+            {
+                if (next)
+                {
+                    idx++;
+                    if (idx >= TokenListView.Items.Count - 1) break;
+                }
+                else
+                {
+                    idx--;
+                    if (idx < 0) break;
+                }
+
+                object t = TokenListView.Items[idx];
+                string msg = (t as Token).GetMessages();
+
+                if (msg == null) continue;
+
+                if (!case_sensitive)
+                    msg = msg.ToLower();
+
+                if (msg.Contains(text))
+                {
+                    // Select and focus on the token
+                    TokenListView.SelectedIndex = idx;
+                    TokenListView.UpdateLayout();
+                    TokenListView.ScrollIntoView(TokenListView.Items[idx]);
+                    return true;
+                }
+            }
+
+            searchEndOfFile = true;
+            //MessageBox.Show("End of file");
+            return false;
         }
 
         private void FocusTextNext(object sender, RoutedEventArgs e)
         {
-            Tokenizer.GoToNextText(true);
+            
+            int idx = TokenListView.SelectedIndex;
+            if (idx == -1)
+                idx = 0;
+
+            while (true)
+            {
+                if (true)
+                {
+                    idx++;
+                    if (idx >= TokenListView.Items.Count - 1) break;
+                }
+                else
+                {
+                    idx--;
+                    if (idx < 0) break;
+                }
+
+                object t = TokenListView.Items[idx];
+                string msg = (t as Token).GetMessages();
+
+                if (msg != null)
+                {
+                    // Select and focus on the token
+                    TokenListView.SelectedIndex = idx;
+                    TokenListView.UpdateLayout();
+                    TokenListView.ScrollIntoView(TokenListView.Items[idx]);
+
+                    // Focus the message field
+                    if (t is TokenMsgDisp2)
+                        GetGridAtPos(4, 1).Focus();
+                    //else if (t is TokenSystemMsg)
+                    //    GetGridAtPos(3, 1).Focus();
+                    else if (t is TokenSelectDisp2)
+                        GetGridAtPos(3, 1).Focus();
+
+                    return;
+                }
+            }
+
+            MessageBox.Show("End of file. No more text.");
+           
         }
+
+        UIElement GetGridAtPos(int row, int col)
+        {
+            foreach (UIElement e in Grid.Children)
+            {
+                if (Grid.GetRow(e) == row && Grid.GetColumn(e) == col)
+                    return e;
+            }
+            return null;
+        }
+
+        public bool Search(string text, bool next, bool case_sensitive)
+        {
+            int idx = TokenListView.SelectedIndex;
+            if (idx == -1)
+                idx = 0;
+
+            text = Utility.StringDoubleSpace(text);
+            if (!case_sensitive)
+                text = text.ToLower();
+
+            if (searchEndOfFile)
+            {
+                if (next) idx = 0;
+                else idx = TokenListView.Items.Count - 1;
+                searchEndOfFile = false;
+            }
+
+            while (true)
+            {
+                if (next)
+                {
+                    idx++;
+                    if (idx >= TokenListView.Items.Count - 1) break;
+                }
+                else
+                {
+                    idx--;
+                    if (idx < 0) break;
+                }
+
+                object t = TokenListView.Items[idx];
+                string msg = (t as Token).GetMessages();
+
+                if (msg == null) continue;
+
+                if (!case_sensitive)
+                    msg = msg.ToLower();
+
+                if (msg.Contains(text))
+                {
+                    // Select and focus on the token
+                    TokenListView.SelectedIndex = idx;
+                    TokenListView.UpdateLayout();
+                    TokenListView.ScrollIntoView(TokenListView.Items[idx]);
+                    return true;
+                }
+            }
+
+            searchEndOfFile = true;
+            //MessageBox.Show("End of file");
+            return false;
+        }
+
 
         private void MenuViewFolders_Clicked(object sender, RoutedEventArgs e)
         {
@@ -555,8 +681,8 @@ namespace Riven_Script_Editor
             MenuViewDescription.IsChecked = !MenuViewDescription.IsChecked;
             UpdateConfig("view_description", MenuViewDescription.IsChecked ? "1" : "0");
 
-            if (ListView1.SelectedItem != null)
-                (ListView1.SelectedItem as Token).UpdateGui();
+            if (TokenListView.SelectedItem != null)
+                (TokenListView.SelectedItem as Token).UpdateGui(this);
         }
 
         private void MenuViewLabel_Clicked(object sender, RoutedEventArgs e)
@@ -564,13 +690,13 @@ namespace Riven_Script_Editor
             MenuViewLabel.IsChecked = !MenuViewLabel.IsChecked;
             UpdateConfig("view_label", MenuViewLabel.IsChecked ? "1" : "0");
 
-            if (ListView1.SelectedItem != null)
-                (ListView1.SelectedItem as Token).UpdateGui();
+            if (TokenListView.SelectedItem != null)
+                (TokenListView.SelectedItem as Token).UpdateGui(this);
         }
         
         private void FocusTextPrev(object sender, RoutedEventArgs e)
         {
-            Tokenizer.GoToNextText(false);
+            //GoToNextText(false);
         }
         
         private void Menu_File_Save(object sender, RoutedEventArgs e)
@@ -584,7 +710,11 @@ namespace Riven_Script_Editor
 
             try
             {
-                Tokenizer.SaveFile(System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content));
+                string outPath = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content);
+                byte[] output = Tokenizer.AssembleAsData();
+                var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
+                stream_out.Write(output, 0, output.Length);
+                stream_out.Close();
             }
             catch (Exception ex)
             {
@@ -612,13 +742,38 @@ namespace Riven_Script_Editor
             }
         }
 
+        private void Menu_Export_Txt(object sender, RoutedEventArgs e)
+        {
+            string fname;
+            try
+            {
+                fname = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
+            }
+            catch { return; }
+
+
+            try
+            {
+                string txt_filename = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content + ".txt");
+                var stream_out = new FileStream(txt_filename, FileMode.Create, FileAccess.ReadWrite);
+                byte[] output = Tokenizer.AssembleAsText((string)(listviewFiles.SelectedItem as ListViewItem).Content);
+                stream_out.Write(output, 0, output.Length);
+                stream_out.Close();
+
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
         private void ListView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count == 0)
                 return;
             var t = e.AddedItems[0];
             
-            (t as Token).UpdateGui();
+            (t as Token).UpdateGui(this);
         }
 
         private void ListViewFiles_SelectionChanged(object sender, SelectionChangedEventArgs args)
@@ -632,13 +787,20 @@ namespace Riven_Script_Editor
 
             filename = (string)((ListViewItem)args.AddedItems[0]).Content;
             string path_en = System.IO.Path.Combine(folder, filename);
-            string path_jp = System.IO.Path.Combine(textbox_inputFolderJp.Text, filename);
-            if (!File.Exists(path_jp))
-                path_jp = null;
 
-            Tokenizer.OpenFile(path_en, path_jp);
-            ((MainWindow)Application.Current.MainWindow).Title = "R11 Script: " + filename;
-            DataContext = new CommandViewBox();
+            
+            byte[] binData = File.ReadAllBytes(path_en);
+            if(filename.Equals("DATA.BIN"))
+            {
+                Tokenizer = new DataTokenizer(new DataWrapper(binData));
+            }
+            else
+            {
+                Tokenizer = new ScriptTokenizer(new DataWrapper(binData));
+            }
+            tokenList = Tokenizer.ParseData();
+            ((MainWindow)Application.Current.MainWindow).Title = "12R Script: " + filename;
+            DataContext = new CommandViewBox(tokenList);
         }
 
         private void ListView1_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
@@ -716,11 +878,11 @@ namespace Riven_Script_Editor
             }
         }
 
-        public CommandViewBox()
+        public CommandViewBox(List<Token> tokenList)
         {
             MyListItems = new ObservableCollection<Token>();
 
-            foreach (var token in Tokenizer.Tokens)
+            foreach (var token in tokenList)
             {
                 MyListItems.Add(token);
             }

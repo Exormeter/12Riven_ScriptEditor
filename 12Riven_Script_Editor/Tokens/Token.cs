@@ -17,13 +17,66 @@ using Xceed.Wpf.Toolkit;
 
 namespace Riven_Script_Editor.Tokens
 {
+
+    public class MessagePointer : IComparable<MessagePointer>
+    {
+        private readonly int _upperByte;
+        private readonly int _lowerByte;
+        private byte[] _commandData;
+        public string Message { get; set; }
+
+        private UInt16 _msgPtrString;
+        public UInt16 MsgPtrString
+        {
+            get { return _msgPtrString; }
+            set
+            {
+                if (_commandData == null) return;
+                _commandData[_upperByte] = BitConverter.GetBytes(value)[1];
+                _commandData[_lowerByte] = BitConverter.GetBytes(value)[0];
+                _msgPtrString = value;
+            }
+        }
+
+        public MessagePointer(int upper, int lower, byte[] commandData)
+        {
+            _upperByte = upper;
+            _lowerByte = lower;
+            _commandData = commandData;
+            MsgPtrString = BitConverter.ToUInt16(commandData, lower);
+            
+        }
+
+        public MessagePointer(int upper, int lower, String message)
+        {
+            _upperByte = upper;
+            _lowerByte = lower;
+            Message = message;
+        }
+
+        public int CompareTo(MessagePointer other)
+        {
+            return _lowerByte.CompareTo(other._lowerByte);
+        }
+
+        public byte[] GetMessagesBytes()
+        {
+            byte[] msg = Utility.StringEncode(Message);
+            byte[] output = new byte[msg.Length + 1];
+            msg.CopyTo(output, 0);
+
+            return output;
+        }
+    }
+
     public class Token : INotifyPropertyChanged
     {
         public const TokenType Type = 0;
         private SolidColorBrush BrushForeground = new SolidColorBrush(Color.FromRgb(255,255,255));
         private SolidColorBrush BrushBackground = new SolidColorBrush(Color.FromRgb(51, 51, 51));
+        public List<MessagePointer> MessagePointerList = new List<MessagePointer>();
 
-        public Token(byte[] byteCommand, int offset)
+        public Token(DataWrapper dataWrapper, byte[] byteCommand, int offset)
         {
             _byteCommand = byteCommand;
             _opCode = byteCommand[0];
@@ -31,12 +84,17 @@ namespace Riven_Script_Editor.Tokens
             _payload = byteCommand.Skip(2).Take(_length - 2).ToArray();
             _command = _opCode.ToString("X2");
             _offset = offset.ToString("X2");
+            _dataWrapper = dataWrapper;
         }
 
-        public Token()
+
+        public Token(DataWrapper dataWrapper, int offset)
         {
-
+            _offset = offset.ToString("X2");
+            _dataWrapper = dataWrapper;
         }
+  
+        protected DataWrapper _dataWrapper;
 
         protected byte[] _payload;
 
@@ -142,8 +200,6 @@ namespace Riven_Script_Editor.Tokens
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 
-        public virtual byte[] GetBytes() { throw new NotImplementedException(); }
-
         public virtual string GetMessages() { return null; }
 
         public virtual byte[] GetMessagesBytes() { return null; }
@@ -152,47 +208,40 @@ namespace Riven_Script_Editor.Tokens
 
         public virtual void UpdateData() { }
 
-        public virtual void UpdateGui()
+        public virtual void UpdateGui(MainWindow window)
         {
-            UpdateGui(true);
+            UpdateGui(window, true);
         }
 
-        public virtual void UpdateGui(bool clear_list)
+        public virtual void UpdateGui(MainWindow window, bool clear_list)
         {
-            Tokenizer.Grid.Children.Clear();
-            Tokenizer.Grid.RowDefinitions.Clear();
-            Tokenizer.Grid.Height = 0;
+            window.Grid.Children.Clear();
+            window.Grid.RowDefinitions.Clear();
+            window.Grid.Height = 0;
             if (clear_list)
-                Tokenizer.EntriesList.ItemsSource = null;
+                window.EntriesList.ItemsSource = null;
 
-            var rows = Tokenizer.Grid.RowDefinitions;
+            var rows = window.Grid.RowDefinitions;
 
-            AddDescriptionBox();
-            if (!Tokenizer.MenuViewDescription.IsChecked)
+            AddDescriptionBox(window);
+            if (!window.MenuViewDescription.IsChecked)
             {
                 rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
-                Tokenizer.Grid.Height -= 60;
+                window.Grid.Height -= 60;
             }
                 
 
-            //AddTextbox("Land", "land");
-            //if (!Tokenizer.MenuViewLabel.IsChecked)
-            //{
-            //    rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
-            //    Tokenizer.Grid.Height -= 24;
-            //}
-
-            AddSpacer();
-            if (!Tokenizer.MenuViewLabel.IsChecked && !Tokenizer.MenuViewDescription.IsChecked)
+            AddSpacer(window);
+            if (!window.MenuViewLabel.IsChecked && !window.MenuViewDescription.IsChecked)
             {
                 rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
-                Tokenizer.Grid.Height -= 24;
+                window.Grid.Height -= 24;
             }
         }
 
-        protected void AddCombobox<T>(string label, string var_name)
+        protected void AddCombobox<T>(MainWindow window, string label, string var_name)
         {
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 24;
             var row = new RowDefinition();
             row.Height = new GridLength(24, GridUnitType.Pixel);
@@ -221,18 +270,18 @@ namespace Riven_Script_Editor.Tokens
             x.Children.Add(cb);
         }
 
-        protected void AddSpacer()
+        protected void AddSpacer(MainWindow window)
         {
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 24;
             var row = new RowDefinition();
             row.Height = new GridLength(24, GridUnitType.Pixel);
             x.RowDefinitions.Add(row);
         }
 
-        protected void AddRichTextbox(string label, string var_name, bool enabled=true)
+        protected void AddRichTextbox(MainWindow window, string label, string var_name, bool enabled=true)
         {
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 60;
             var row = new RowDefinition();
             row.Height = new GridLength(60, GridUnitType.Pixel);
@@ -259,16 +308,16 @@ namespace Riven_Script_Editor.Tokens
             tb.Text = (string)this.GetType().GetProperty(var_name).GetValue(this);
             tb.TextChanged += (sender, args) =>
             {
-                Tokenizer.ChangedFile = true;
+                window.ChangedFile = true;
                 this.GetType().GetProperty(var_name).SetValue(this, tb.Text, null);
                 UpdateData();
             };
             x.Children.Add(tb);
         }
 
-        protected void AddDescriptionBox()
+        protected void AddDescriptionBox(MainWindow window)
         {
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 60;
             var row = new RowDefinition();
             row.Height = new GridLength(60, GridUnitType.Pixel);
@@ -295,12 +344,12 @@ namespace Riven_Script_Editor.Tokens
             x.Children.Add(tb);
         }
 
-        protected void AddTextbox(string label, string var_name, object obj= null)
+        protected void AddTextbox(MainWindow window, string label, string var_name, object obj= null)
         {
             if (obj == null)
                 obj = this;
 
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 24;
             var row = new RowDefinition();
             row.Height = new GridLength(24, GridUnitType.Pixel);
@@ -322,16 +371,16 @@ namespace Riven_Script_Editor.Tokens
             tb.Text = (string)obj.GetType().GetProperty(var_name).GetValue(obj);
             tb.TextChanged += (sender, args) =>
             {
-                Tokenizer.ChangedFile = true;
+                window.ChangedFile = true;
                 obj.GetType().GetProperty(var_name).SetValue(obj, tb.Text, null);
                 UpdateData();
             };
             x.Children.Add(tb);
         }
 
-        protected void AddTranslationButton(string label, string var_name, bool enabled = true)
+        protected void AddTranslationButton(MainWindow window, string label, string var_name, bool enabled = true)
         {
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
 
             var row1 = new RowDefinition();
             row1.Height = new GridLength(24, GridUnitType.Pixel);
@@ -506,12 +555,12 @@ namespace Riven_Script_Editor.Tokens
 
 
 
-        protected void AddUint8(string label, string var_name, object obj=null)
+        protected void AddUint8(MainWindow window, string label, string var_name, object obj=null)
         {
             if (obj == null)
                 obj = this;
 
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 24;
             var row = new RowDefinition();
             row.Height = new GridLength(24, GridUnitType.Pixel);
@@ -538,19 +587,19 @@ namespace Riven_Script_Editor.Tokens
             ud.Value = (byte)obj.GetType().GetProperty(var_name).GetValue(obj);
             ud.ValueChanged += (sender, args) =>
             {
-                Tokenizer.ChangedFile = true;
+                window.ChangedFile = true;
                 obj.GetType().GetProperty(var_name).SetValue(obj, (byte)args.NewValue, null);
                 UpdateData();
             };
             x.Children.Add(ud);
         }
 
-        protected void AddUint16(string label, string var_name, object obj = null)
+        protected void AddUint16(MainWindow window, string label, string var_name, object obj = null)
         {
             if (obj == null)
                 obj = this;
 
-            var x = Tokenizer.Grid;
+            var x = window.Grid;
             x.Height += 24;
             var row = new RowDefinition();
             row.Height = new GridLength(24, GridUnitType.Pixel);
@@ -585,7 +634,7 @@ namespace Riven_Script_Editor.Tokens
                 else if (number < 0) ud.Value = 0;
                 else
                 {
-                    Tokenizer.ChangedFile = true;
+                    window.ChangedFile = true;
                     obj.GetType().GetProperty(var_name).SetValue(obj, (UInt16)number, null);
                     UpdateData();
                 }
@@ -593,12 +642,12 @@ namespace Riven_Script_Editor.Tokens
             x.Children.Add(ud);
         }
 
-        protected void PopulateEntryList<T>(List<T> entries, SelectionChangedEventHandler ev_handler)
+        protected void PopulateEntryList<T>(MainWindow window, List<T> entries, SelectionChangedEventHandler ev_handler)
         {
-            Tokenizer.EntriesList.ItemsSource = entries;
-            Tokenizer.EntriesList.SelectionChanged += ev_handler;
+            window.EntriesList.ItemsSource = entries;
+            window.EntriesList.SelectionChanged += ev_handler;
             if (entries.Count > 0)
-                Tokenizer.EntriesList.SelectedIndex = 0;
+                window.EntriesList.SelectedIndex = 0;
         }
     }
 

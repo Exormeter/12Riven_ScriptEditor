@@ -18,7 +18,7 @@ namespace Riven_Script_Editor.Tokens
             set => _identical_jp_labels = value;
         }
 
-        public TokenSelectDisp2(byte[] byteCommand, int pos, bool blank=false): base(byteCommand, pos)
+        public TokenSelectDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank=false): base(wrapper, byteCommand, pos)
         {
             _command = "Select Disp2";
             _description = "Display choices (version 2)";
@@ -32,9 +32,9 @@ namespace Riven_Script_Editor.Tokens
                 entry.Unknown2 = 999;
                 entry.ChoiceId = 999;
 
-                entry.Message = Tokenizer.ReadString(entry.MsgPtr);
+                entry.Message = _dataWrapper.ReadString(entry.MsgPtr);
                 // Remove double spaces
-                entry.TempMsg = Tokenizer.StringSingleSpace(entry.Message);
+                entry.TempMsg = Utility.StringSingleSpace(entry.Message);
                 Entries.Add(entry);
             }
             
@@ -48,24 +48,6 @@ namespace Riven_Script_Editor.Tokens
             _byteCommand[(entryIndex * 8) + 1] = BitConverter.GetBytes(msgPtr)[1];
             _byteCommand[(entryIndex * 8)] = BitConverter.GetBytes(msgPtr)[0];
             Entries[entryIndex - 1].MsgPtr = msgPtr;
-        }
-
-        public override byte[] GetBytes()
-        {
-            byte[] output = new byte[_length];
-            output[0] = (byte)Type;
-            output[1] = (byte)num_entries;
-            BitConverter.GetBytes(fixed1).CopyTo(output, 2);
-            for (int i = 0; i < num_entries; i++)
-            {
-                var e = Entries[i];
-                BitConverter.GetBytes(e.MsgPtr).CopyTo(output, i * 8 + 6);
-                BitConverter.GetBytes(e.Unknown1).CopyTo(output, i * 8 + 8);
-                BitConverter.GetBytes(e.Unknown2).CopyTo(output, i * 8 + 10);
-                BitConverter.GetBytes(e.ChoiceId).CopyTo(output, i * 8 + 12);
-            }
-
-            return output;
         }
 
         public override string GetMessages()
@@ -86,7 +68,7 @@ namespace Riven_Script_Editor.Tokens
 
             foreach (var e in Entries)
             {
-                msg = Tokenizer.StringEncode(e.Message);
+                msg = Utility.StringEncode(e.Message);
                 messages.Add(msg);
                 len += msg.Length + 1;
             }
@@ -107,7 +89,7 @@ namespace Riven_Script_Editor.Tokens
             {
                 var e = Entries[i];
                 e.MsgPtr = (UInt16)offset;
-                offset += Tokenizer.StringEncode(e.Message).Length + 1;
+                offset += Utility.StringEncode(e.Message).Length + 1;
             }
             return offset;
         }
@@ -121,23 +103,23 @@ namespace Riven_Script_Editor.Tokens
             var m = new List<string>();
             for (int i = 0; i < Entries.Count; i++)
             {
-                Entries[i].Message = Tokenizer.StringDoubleSpace(Entries[i].TempMsg);
+                Entries[i].Message = Utility.StringDoubleSpace(Entries[i].TempMsg);
                 m.Add(Entries[i].Message);
             }
 
             Data2 = String.Join(" / ", m);
         }
 
-        public override void UpdateGui()
+        public override void UpdateGui(MainWindow window)
         {
-            base.UpdateGui();
-            PopulateEntryList(Entries, (sender, ev) => {
+            base.UpdateGui(window);
+            PopulateEntryList(window, Entries, (sender, ev) => {
                 if (ev.AddedItems.Count == 0 || !(ev.AddedItems[0] is SelectDisp2Entry))
                     return;
 
-                base.UpdateGui(false);
+                base.UpdateGui(window, false);
                 var e = (SelectDisp2Entry)ev.AddedItems[0];
-                AddTextbox("Choise", "TempMsg", e);
+                AddTextbox(window, "Choise", "TempMsg", e);
                 //AddTextbox("Choise Message", "MessageJp", e);
                 //AddUint16("Unknown1", "Unknown1", e);
                 //AddUint16("Unknown2", "Unknown2", e);
@@ -158,7 +140,7 @@ namespace Riven_Script_Editor.Tokens
 
         public byte[] GetMessagesBytes()
         {
-            byte[] msg = Tokenizer.StringEncode(Message);
+            byte[] msg = Utility.StringEncode(Message);
             byte[] output = new byte[msg.Length + 1];
             msg.CopyTo(output, 0);
 

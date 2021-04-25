@@ -8,26 +8,17 @@ namespace Riven_Script_Editor.Tokens
     {
         public new const TokenType Type = TokenType.bgm_del;
 
-        byte fixed1;
-
-        public TokenHeader(byte[] byteCommand, int pos) : base(byteCommand, pos)
+        public TokenHeader(DataWrapper wrapper, byte[] byteCommand, int pos) : base(wrapper, byteCommand, pos)
         {
             _command = "Header";
             
 
             _length = byteCommand[0];
-
-
-            fixed1 = 0;
         }
 
-        public override byte[] GetBytes()
+        public override string GetMessages()
         {
-            byte[] output = new byte[_length];
-            output[0] = (byte)Type;
-            output[1] = (byte)fixed1;
-
-            return output;
+            return "";
         }
     }
 }

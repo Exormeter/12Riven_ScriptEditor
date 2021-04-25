@@ -9,7 +9,6 @@ namespace Riven_Script_Editor.Tokens
     {
         public new const TokenType Type = TokenType.msg_disp2;
 
-        byte fixed1;
         private UInt16 _msgPtr;
         public UInt16 MsgPtr {
             get { return _msgPtr; }
@@ -23,7 +22,7 @@ namespace Riven_Script_Editor.Tokens
         public UInt16 MsgId { get; set; }
         public UInt16 VoiceId { get; set; }
         public MsgSpeaker SpeakerId { get; set; }
-        String CompleteMessage;
+        public string CompleteMessage { get; set; }
         public string Speaker { get; set; }
         public string Message { get; set; }
         public string MessageEnding { get; set; }
@@ -35,7 +34,7 @@ namespace Riven_Script_Editor.Tokens
 
         static Regex terminator_regex = new Regex(@"(%[%ABCDEKNPpSTV0-9]*?)$");
 
-        public TokenMsgDisp2(byte[] byteCommand, int pos, bool blank=false): base(byteCommand, pos)
+        public TokenMsgDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank=false): base(wrapper, byteCommand, pos)
         {
 
             MsgPtr = BitConverter.ToUInt16(byteCommand, 6);
@@ -55,12 +54,11 @@ namespace Riven_Script_Editor.Tokens
                 "\n\nWait for voice line to end\n%V (at end of dialogue)" +
                 "\n\nX Position:\n%X### (before start of text)\n(eg. %X050 shift to 50 pixels from left)";
 
-            MessageJp = Tokenizer.ReadString(MsgPtr);
+            MessageJp = _dataWrapper.ReadString(MsgPtr);
             if (blank)
             {
-                fixed1 = 0;
                 MsgPtr = 0;
-                CompleteMessage = "Message%K%P";
+                CompleteMessage = "Message Empty%K%P";
 
                 MsgId = 0;
                 VoiceId = 0;
@@ -68,11 +66,10 @@ namespace Riven_Script_Editor.Tokens
             }
             else
             {
-                fixed1 = 0;
-                CompleteMessage = Tokenizer.ReadString(MsgPtr);
+                CompleteMessage = _dataWrapper.ReadString(MsgPtr);
 
-                MsgId = Tokenizer.ReadUInt16(4);
-                VoiceId = Tokenizer.ReadUInt16(6);
+                MsgId = _dataWrapper.ReadUInt16(4);
+                VoiceId = _dataWrapper.ReadUInt16(6);
                 //SpeakerId = (MsgSpeaker)Tokenizer.ReadUInt16(8); if (!Enum.IsDefined(typeof(MsgSpeaker), SpeakerId)) throw new ArgumentOutOfRangeException();
             }
 
@@ -113,22 +110,9 @@ namespace Riven_Script_Editor.Tokens
                 Message = CompleteMessage;
 
             // Remove double spaces
-            Message = Tokenizer.StringSingleSpace(Message);
+            Message = Utility.StringSingleSpace(Message);
 
             UpdateData();
-        }
-
-        public override byte[] GetBytes()
-        {
-            byte[] output = new byte[_length];
-            output[0] = (byte)Type;
-            output[1] = (byte)fixed1;
-            BitConverter.GetBytes(MsgPtr).CopyTo(output, 2);
-            BitConverter.GetBytes(MsgId).CopyTo(output, 4);
-            BitConverter.GetBytes(VoiceId).CopyTo(output, 6);
-            BitConverter.GetBytes((UInt16)SpeakerId).CopyTo(output, 8);
-
-            return output;
         }
 
         public override string GetMessages()
@@ -140,7 +124,7 @@ namespace Riven_Script_Editor.Tokens
 
         public override byte[] GetMessagesBytes()
         {
-            byte[] msg = Tokenizer.StringEncode(CompleteMessage);
+            byte[] msg = Utility.StringEncode(CompleteMessage);
             byte[] output = new byte[msg.Length + 1];
             msg.CopyTo(output, 0);
 
@@ -150,12 +134,12 @@ namespace Riven_Script_Editor.Tokens
         public override int SetMessagePointer(int offset)
         {
             MsgPtr = (UInt16) offset;
-            return offset + Tokenizer.StringEncode(CompleteMessage).Length + 1;
+            return offset + Utility.StringEncode(CompleteMessage).Length + 1;
         }
 
         public override void UpdateData()
         {
-            string message_spacing = Tokenizer.StringDoubleSpace(Message);
+            string message_spacing = Utility.StringDoubleSpace(Message);
 
             if (Speaker.Length > 0)
                 //CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
@@ -163,21 +147,19 @@ namespace Riven_Script_Editor.Tokens
             else
                 CompleteMessage = message_spacing + "" + MessageEnding;
 
-            Data2 = MessageJp;
+            Data2 = CompleteMessage;
         }
 
-        public override void UpdateGui()
+        public override void UpdateGui(MainWindow window)
         {
-            base.UpdateGui();
-            base.AddTextbox("Speaker", "Speaker");
-            base.AddRichTextbox("Message", "Message");
-            base.AddTextbox("Terminator", "MessageEnding");
-            base.AddRichTextbox("Complete Text", "MessageJp");
-            base.AddTranslationButton("Translation", "MessageJp");
-            base.AddSpacer();
-            //base.AddUint16("Msg ID", "MsgId");
-            //base.AddUint16("Voice ID", "VoiceId");
-            //base.AddCombobox<MsgSpeaker>("Speaker ID", "SpeakerId");
+            base.UpdateGui(window);
+            base.AddTextbox(window, "Speaker", "Speaker");
+            base.AddRichTextbox(window, "Message", "Message");
+            base.AddTextbox(window, "Terminator", "MessageEnding");
+            base.AddRichTextbox(window, "Complete Text", "CompleteMessage", false);
+            base.AddTranslationButton(window, "Translation", "MessageJp");
+
+            base.AddSpacer(window);
         }
     }
 
