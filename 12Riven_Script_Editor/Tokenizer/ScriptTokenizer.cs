@@ -74,7 +74,7 @@ namespace Riven_Script_Editor.Tokens
 
             TokenMsgDisp2 lastMsgToken = (TokenMsgDisp2)Tokens.Last(tempToken => tempToken is TokenMsgDisp2);
 
-            int trailerStart = lastMsgToken.MsgPtr + lastMsgToken.MessageJp.Length;
+            int trailerStart = lastMsgToken.MsgPtr.MsgPtrString + lastMsgToken.CompleteMessage.Length;
             int trailerLenght = data.RawArray.Length - trailerStart;
             byteCommand = data.RawArray.Skip(trailerStart).Take(trailerLenght).ToArray();
             trailerToken = new Token(data, byteCommand, 0);
@@ -87,9 +87,7 @@ namespace Riven_Script_Editor.Tokens
             int pos = 0;
             Stream stream = new MemoryStream();
 
-            TokenMsgDisp2 firstMsgToken = (TokenMsgDisp2)Tokens.First(tempToken => tempToken is TokenMsgDisp2);
-
-            offsetTextSection = firstMsgToken.MsgPtr;
+            Tokens.ForEach(token => offsetTextSection += token.Length);
 
             //padding with 0 until textSection begins
             byte[] fill = new Byte[offsetTextSection];
@@ -97,34 +95,12 @@ namespace Riven_Script_Editor.Tokens
 
             foreach (var token in Tokens)
             {
-                if (token is TokenMsgDisp2 tokenMsgDisp2)
+                token.MessagePointerList.Sort();
+                foreach (MessagePointer messagePointer in token.MessagePointerList)
                 {
-                    tokenMsgDisp2.MsgPtr = (UInt16)stream.Length;
+                    messagePointer.MsgPtrString = (UInt16)stream.Length;
                     stream.Seek(0, SeekOrigin.End);
-                    byte[] message = tokenMsgDisp2.GetMessagesBytes();
-                    stream.Write(message, 0, message.Length);
-                }
-
-                else if (token is TokenSelectDisp2 tokenSelectDisp2)
-                {
-
-                    int index = 0;
-                    foreach (SelectDisp2Entry entry in tokenSelectDisp2.Entries)
-                    {
-                        tokenSelectDisp2.UpdateEntryMsgPointer(index, (UInt16)stream.Length);
-                        stream.Seek(0, SeekOrigin.End);
-                        byte[] message = entry.GetMessagesBytes();
-                        stream.Write(message, 0, message.Length);
-                        index++;
-
-                    }
-                }
-
-                else if(token is TokenSysMessage tokenSysMessage)
-                {
-                    tokenSysMessage.MsgPtr = (UInt16)stream.Length;
-                    stream.Seek(0, SeekOrigin.End);
-                    byte[] message = tokenSysMessage.GetMessagesBytes();
+                    byte[] message = messagePointer.GetMessagesBytes();
                     stream.Write(message, 0, message.Length);
                 }
 

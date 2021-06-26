@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Riven_Script_Editor"
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit" x:Class="Riven_Script_Editor.MainWindow"
         mc:Ignorable="d"
-        Title="12Riven Editor" Height="720" Width="978">
+        Title="12Riven Editor" Height="1400" Width="1800">
 
     <DockPanel Background="#FF36393F">
         <Border DockPanel.Dock="Top" BorderBrush="{StaticResource NormalBorderBrush}" BorderThickness="0,0,0,1">
@@ -83,7 +83,7 @@
             <CheckBox x:Name="checkbox_SearchCaseSensitive" Content="Case sensitive" Grid.Column="5" Margin="0" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Grid>
 
-        <!--<Grid DockPanel.Dock="Top" Margin="5" HorizontalAlignment="Center">
+        <Grid DockPanel.Dock="Top" Margin="5" HorizontalAlignment="Center">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="200"/>
                 <ColumnDefinition Width="70"/>
@@ -98,15 +98,10 @@
                 <RowDefinition Height="24" />
             </Grid.RowDefinitions>
 
-            <ComboBox Grid.Row="0" Grid.Column="0" Name="TokenSelectorComboBox"/>
-            <Button Grid.Row="0" Grid.Column="1" Content="Add" Click="AddNode"/>
-            <Button Grid.Row="0" Grid.Column="2" Content="Delete" Click="DeleteNode"/>
-            <Button Grid.Row="0" Grid.Column="3" Content="Fade to black" Click="AddFadeToBlack"/>
-            <Button Grid.Row="0" Grid.Column="4" Content="Fade from black" Click="AddFadeFromBlack"/>
-            <Button Grid.Row="0" Grid.Column="5" Content="Flash White" Click="AddFlashWhite"/>
-            <Button Grid.Row="0" Grid.Column="6" Content="Go to script" Click="AddGotoScript"/>
-            <Button Grid.Row="0" Grid.Column="7" Content="Stop Music" Click="AddStopMusic"/>
-        </Grid>-->
+            <Button Grid.Row="0" Grid.Column="1" Content="Copy Node" Click="CopyNode"/>
+            <Button Grid.Row="0" Grid.Column="2" Content="Paste Node" Click="InsertNode"/>
+          <Button Grid.Row="0" Grid.Column="3" Content="Delete Node" Click="DeleteNode"/>
+        </Grid>
 
         <Grid DockPanel.Dock="Top" Margin="5">
             <Grid.ColumnDefinitions>
@@ -133,7 +128,7 @@
                         <GridViewColumn Header="Offset" Width="50" DisplayMemberBinding="{Binding Offset}"/>
                         <GridViewColumn Header="Length" Width="50" DisplayMemberBinding="{Binding Length}"/>
                         <GridViewColumn Header="Command" Width="100" DisplayMemberBinding="{Binding Command}"/>
-                        <GridViewColumn Header="Data1" Width="100" DisplayMemberBinding="{Binding Data}"/>
+                        <GridViewColumn Header="Data1" Width="275" DisplayMemberBinding="{Binding Data}"/>
                         <GridViewColumn Header="Message" Width="600" DisplayMemberBinding="{Binding Data2}"/>
                         <GridView.ColumnHeaderContainerStyle>
                             <Style TargetType="{x:Type GridViewColumnHeader}">

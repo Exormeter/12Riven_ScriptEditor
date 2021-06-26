@@ -1,4 +1,8 @@
-﻿using System.Text;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Linq;
 
 namespace Riven_Script_Editor
 {
@@ -85,6 +89,44 @@ namespace Riven_Script_Editor
             output = output.Replace("≒", "ö");
 
             return output;
+        }
+
+        public static string ToString(byte[] byteArray)
+        {
+            string byteCommandString = "";
+            foreach (byte commandByte in byteArray)
+            {
+                byteCommandString += commandByte.ToString("X2") + " ";
+            }
+            return byteCommandString;
+        }
+
+        public static bool ToByteArray(string byteString, out byte[] byteArray)
+        {
+            List<byte> bytes = new List<byte>();
+            Regex rgx = new Regex("^[A-Fa-f0-9\\s]*$");
+
+            byteArray = bytes.ToArray();
+            if (!rgx.IsMatch(byteString)) { return false; }
+
+            List<string> byteStrings = byteString.Split(' ').ToList();
+
+            byteStrings.RemoveAll(literal => literal.Equals(""));
+            foreach (string byteChunk in byteStrings)
+            {
+                try
+                {
+                    bytes.Add(Convert.ToByte(int.Parse(byteChunk, System.Globalization.NumberStyles.HexNumber)));
+                }
+                catch(Exception e)
+                {
+                    return false;
+                }
+            }
+
+            byteArray = bytes.ToArray();
+
+            return true;
         }
     }
 }

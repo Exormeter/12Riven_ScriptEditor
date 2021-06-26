@@ -3,15 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Runtime.CompilerServices;
-using System.Text;
-using System.Threading.Tasks;
 using System.Web.Script.Serialization;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Documents;
 using System.Windows.Media;
 using Xceed.Wpf.Toolkit;
 
@@ -69,6 +65,8 @@ namespace Riven_Script_Editor.Tokens
         }
     }
 
+    
+
     public class Token : INotifyPropertyChanged
     {
         public const TokenType Type = 0;
@@ -81,10 +79,10 @@ namespace Riven_Script_Editor.Tokens
             _byteCommand = byteCommand;
             _opCode = byteCommand[0];
             _length = Convert.ToInt32(byteCommand[1]);
-            _payload = byteCommand.Skip(2).Take(_length - 2).ToArray();
-            _command = _opCode.ToString("X2");
+            _command = ((TokenType)((int)_opCode)).ToString();
             _offset = offset.ToString("X2");
             _dataWrapper = dataWrapper;
+            Data = Utility.ToString(byteCommand);
         }
 
 
@@ -93,23 +91,33 @@ namespace Riven_Script_Editor.Tokens
             _offset = offset.ToString("X2");
             _dataWrapper = dataWrapper;
         }
+
+        public Token(Token token)
+        {
+            byte[] tempCommand = new byte[token._byteCommand.Length];
+            token.ByteCommand.CopyTo(tempCommand, 0);
+            _byteCommand = tempCommand;
+            _opCode = ByteCommand[0];
+            _length = Convert.ToInt32(ByteCommand[1]);
+            _command = _opCode.ToString("X2");
+            _offset = "0x0";
+            _dataWrapper = token._dataWrapper;
+            Data = Utility.ToString(tempCommand);
+        }
   
         protected DataWrapper _dataWrapper;
-
-        protected byte[] _payload;
-
-        public byte[] Payload
-        {
-            get => _payload;
-        }
 
         protected byte[] _byteCommand;
 
         public byte[] ByteCommand
         {
             get => _byteCommand;
+            set
+            {
+                _byteCommand = value;
+            }
         }
-
+        
         protected byte _opCode;
         public byte OpCode
         {
@@ -141,27 +149,6 @@ namespace Riven_Script_Editor.Tokens
             get { return _length; }
         }
 
-        private string _label;
-        public string Label
-        {
-            get => _label;
-            set
-            {
-                _label = value;
-                OnPropertyChanged(nameof(Label));
-            }
-        }
-
-        public string Land
-        {
-            get {
-                if (this.ReferingLabels.Count > 0)
-                    return ">";
-                return "";
-            }
-        }
-
-
         private List<string> _refering_labels = new List<string>();
         public List<string> ReferingLabels
         {
@@ -180,7 +167,10 @@ namespace Riven_Script_Editor.Tokens
             set
             {
                 _data = value;
-                OnPropertyChanged(nameof(Data));
+                if (Utility.ToByteArray(value, out _byteCommand))
+                {
+                    OnPropertyChanged(nameof(Data));
+                }
             }
         }
 
@@ -211,6 +201,12 @@ namespace Riven_Script_Editor.Tokens
         public virtual void UpdateGui(MainWindow window)
         {
             UpdateGui(window, true);
+            AddTextbox(window, "Command", "Data");
+        }
+
+        public virtual Token Clone()
+        {
+            return new Token(this);
         }
 
         public virtual void UpdateGui(MainWindow window, bool clear_list)
@@ -237,6 +233,8 @@ namespace Riven_Script_Editor.Tokens
                 rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
                 window.Grid.Height -= 24;
             }
+
+            
         }
 
         protected void AddCombobox<T>(MainWindow window, string label, string var_name)
@@ -656,139 +654,10 @@ namespace Riven_Script_Editor.Tokens
         msg_disp2 = 0x18,
         sel_disp2 = 0x1B,
         sys_disp = 0xD9,
-
-        nop = 0x00,
-        end = 0x01,
-        ifx = 0x02,
-        int_goto = 0x03,
-        int_call = 0x04,
-        int_return = 0x05,
-        ext_goto = 0x06,
-        ext_call = 0x07,
-        ext_return = 0x08,
-        reg_calc = 0x09,
-        count_clear = 0x0A,
-        count_wait = 0x0B,
-        time_wait = 0x0C,
-        pad_wait = 0x0D,
-        pad_get = 0x0E,
-        file_read = 0x0F,
-        file_wait = 0x10,
-        msg_wind = 0x11,
-        msg_view = 0x12,
-        msg_mode = 0x13,
-        msg_pos = 0x14,
-        msg_size = 0x15,
-        msg_type = 0x16,
-        msg_cursor = 0x17,
-        msg_set = 0x18,
-        msg_wait = 0x19,
-        msg_clear = 0x1A,
-        msg_line = 0x1B,
-        msg_speed = 0x1C,
-        msg_color = 0x1D,
-        msg_anim = 0x1E,
-        msg_disp = 0x1F,
-        sel_set = 0x20,
-        sel_entry = 0x21,
-        sel_view = 0x22,
-        sel_wait = 0x23,
-        sel_style = 0x24,
-        sel_disp = 0x25,
-        fade_start = 0x26,
-        fade_wait = 0x27,
-        graph_set = 0x28,
-        graph_del = 0x29,
-        graph_copy = 0x2A,
-        graph_view = 0x2B,
-        graph_pos = 0x2C,
-        graph_move = 0x2D,
-        graph_prio = 0x2E,
-        graph_anim = 0x2F,
-        graph_pal = 0x30,
-        graph_lay = 0x31,
-        graph_wait = 0x32,
-        graph_disp = 0x33,
-        effect_start = 0x34,
-        effect_end = 0x35,
-        effect_wait = 0x36,
-        bgm_set = 0x37,
-        bgm_del = 0x38,
-        bgm_req = 0x39,
-        bgm_wait = 0x3A,
-        bgm_speed = 0x3B,
-        bgm_vol = 0x3C,
-        se_set = 0x3D,
-        se_del = 0x3E,
-        se_req = 0x3F,
-        se_wait = 0x40,
-        se_speed = 0x41,
-        se_vol = 0x42,
-        voice_set = 0x43,
-        voice_del = 0x44,
-        voice_req = 0x45,
-        voice_wait = 0x46,
-        voice_speed = 0x47,
-        voice_vol = 0x48,
-        menu_lock = 0x49,
-        save_lock = 0x4A,
-        save_check = 0x4B,
-        save_disp = 0x4C,
-        disk_change = 0x4D,
-        skip_start = 0x4E,
-        skip_end = 0x4F,
-        task_entry = 0x50,
-        task_del = 0x51,
-        cal_disp = 0x52,
-        title_disp = 0x53,
-        vib_start = 0x54,
-        vib_end = 0x55,
-        vib_wait = 0x56,
-        map_view = 0x57,
-        map_entry = 0x58,
-        map_disp = 0x59,
-        edit_view = 0x5A,
-        chat_send = 0x5B,
-        chat_msg = 0x5C,
-        chat_entry = 0x5D,
-        chat_exit = 0x5E,
-        nop2 = 0x5F,
-        movie_play = 0x60,
-        graph_pos_auto = 0x61,
-        graph_pos_save = 0x62,
-        graph_uv_auto = 0x63,
-        graph_uv_save = 0x64,
-        effect_ex = 0x65,
-        fade_ex = 0x66,
-        vib_ex = 0x67,
-        clock_disp = 0x68,
-        graph_disp_ex = 0x69,
-        map_init_ex = 0x6A,
-        map_point_ex = 0x6B,
-        map_route_ex = 0x6C,
-        quick_save = 0x6D,
-        trace_spc = 0x6E,
-        sys_msg = 0x6F,
-        skip_lock = 0x70,
-        key_lock = 0x71,
-        graph_disp2 = 0x72,
-        date_disp = 0x75,
-        vr_disp = 0x76,
-        vr_select = 0x77,
-        vr_reg_calc = 0x78,
-        vr_msg_disp = 0x79,
-        map_select = 0x7A,
-        ecg_set = 0x7B,
-        ev_init = 0x7C,
-        ev_disp = 0x7D,
-        ev_anim = 0x7E,
-        eye_lock = 0x7F,
-        msg_lock = 0x80,
-        graph_scale_auto = 0x81,
-        movie_start = 0x82,
-        movie_end = 0x83,
-        fade_ex_start = 0x84,
-        fade_ex_wait = 0x85,
-        breath_lock = 0x86,
+        Quick_Save = 0x27,
+        Load_BG = 0x91,
+        Darken_BG= 0x38,
+        Rain_Effect = 0xA1,
+        Loop_Cond = 0x06,
     }
 }

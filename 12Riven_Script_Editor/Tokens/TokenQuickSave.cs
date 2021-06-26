@@ -5,7 +5,6 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenQuickSave : Token
     {
-        public new const TokenType Type = TokenType.quick_save;
         
         byte fixed1;
 

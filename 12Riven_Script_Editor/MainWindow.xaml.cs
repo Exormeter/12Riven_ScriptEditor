@@ -34,9 +34,10 @@ namespace Riven_Script_Editor
         string folder = "";
         string filename = "";
         bool searchEndOfFile = false;
-        Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        readonly Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
         ATokenizer Tokenizer;
         private List<Token> tokenList;
+        Token clipBoardToken = null;
 
         public Grid Grid;
         public ListBox EntriesList;
@@ -460,8 +461,31 @@ namespace Riven_Script_Editor
             //}
         }
 
+        private void CopyNode(object sender, RoutedEventArgs e)
+        {
+            // @TODO
+            if (TokenListView.SelectedIndex > -1)
+            {
+                clipBoardToken = tokenList[TokenListView.SelectedIndex];
+            }
+
+        }
 
 
+        private void InsertNode(object sender, RoutedEventArgs e)
+        {
+            // @TODO
+            if (TokenListView.SelectedIndex > -1 && clipBoardToken != null)
+            {
+                int idx = TokenListView.SelectedIndex + 1;
+                tokenList.Insert(idx, clipBoardToken);
+                CommandViewBox vb = DataContext as CommandViewBox;
+                vb.MyListItems.Insert(idx, clipBoardToken.Clone());
+                TokenListView.SelectedIndex += 1;
+            }
+
+
+        }
         private void Search(bool next)
         {
             if (textbox_search.Text == "")

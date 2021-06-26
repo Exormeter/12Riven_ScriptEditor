@@ -6,7 +6,6 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenSelectDisp : Token
     {
-        public new const TokenType Type = TokenType.sel_disp;
         
         byte num_entries;
         UInt16 fixed1;
