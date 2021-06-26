@@ -12,6 +12,8 @@
 
 3. Select "Open archive" and select the SCENE00.afs file (/12Riven/FILE)
 
+![AE Tools](pictures/AETools.PNG)
+
 4. Select the "Extract all files" option and choose a destination for the extraction
 
 5. Right click inside the AE Tool List and select "Generate file order list"
@@ -32,6 +34,8 @@ These files contain all the commands for the scene, like which music or which gr
 For a translation you only need to be concerned about the "Msg Disp2" commands.
 
 5. Click on the line you want to translate
+
+![12Riven ScriptEditor](pictures/Translate\ Line.PNG)
 
 6. Edit the "Message" field. If the message is said by a speaker, you can edit the "Speaker" field as well.
 "Command", "Terminate" and "Complete Text" don't need any edit.
