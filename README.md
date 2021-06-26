@@ -35,8 +35,6 @@ For a translation you only need to be concerned about the "Msg Disp2" commands.
 
 5. Click on the line you want to translate
 
-![12Riven ScriptEditor](pictures/Translate\ Line.PNG)
-
 6. Edit the "Message" field. If the message is said by a speaker, you can edit the "Speaker" field as well.
 "Command", "Terminate" and "Complete Text" don't need any edit.
 
