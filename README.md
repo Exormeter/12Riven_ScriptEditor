@@ -22,23 +22,26 @@
 
 ## Translating a line 
 
-1. Download the 12Riven ScriptEditor
+1. Download the [12Riven ScriptEditor](https://github.com/Exormeter/12Riven_ScriptEditor/releases/download/0.0.1/12Riven_ScriptEditor.0.0.1.rar)
 
-2. For Folder (ENG), choose the folder you extracted with AE Tools
+2. Open the 12Riven_Script_Editor.exe
 
-3. For List File, choose the text file you extracted with AE Tools
+3. For Folder (ENG), choose the folder you extracted with AE Tools
 
-4. Click on one of the scene files in the list on the left
+4. For List File, choose the text file you extracted with AE Tools
 
-These files contain all the commands for the scene, like which music or which graphic to show.
-For a translation you only need to be concerned about the "Msg Disp2" commands.
+5. Click on one of the scene files in the list on the left
 
-5. Click on the line you want to translate
+6. Click on the line you want to translate
 
-6. Edit the "Message" field. If the message is said by a speaker, you can edit the "Speaker" field as well.
+7. Edit the "Message" field. If the message is said by a speaker, you can edit the "Speaker" field as well.
 "Command", "Terminate" and "Complete Text" don't need any edit.
 
-7. After editing all the lines you wanted to edit, click "File" and "Save current file" to save you edits.
+8. After editing all the lines you wanted to edit, click "File" and "Save current file" to save you edits.
+
+![12Riven ScriptEditor](pictures/ScriptEditor.PNG)
+These files contain all the commands for the scene, like which music to play or which graphic to show.
+For a translation you only need to be concerned about the "Msg Disp2" commands.
 
 ## Translating a choice option
 
@@ -63,5 +66,7 @@ For a translation you only need to be concerned about the "Msg Disp2" commands.
 4. Replace the old SCENE00.afs in your /12Riven/FILE folder with the one you exported
 
 5. Start the game, the game should now display the edits you made
+
+![12Riven Edited](pictures/Edited.PNG)
 
 
