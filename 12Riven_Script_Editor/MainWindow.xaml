@@ -49,9 +49,9 @@
             <TextBox Grid.Row="0" Grid.Column="1" x:Name="textbox_inputFolder" />
             <Button Grid.Row="0" Grid.Column="2" Content="Browse..." Click="BrowseInputFolder"/>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" Text="Folder (JP)" Grid.ColumnSpan="2" />
+            <!--<TextBlock Grid.Row="1" Grid.Column="0" Text="Folder (JP)" Grid.ColumnSpan="2" />
             <TextBox Grid.Row="1" Grid.Column="1" x:Name="textbox_inputFolderJp" />
-            <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Click="BrowseInputFolderJp"/>
+            <Button Grid.Row="1" Grid.Column="2" Content="Browse..." Click="BrowseInputFolderJp"/>-->
 
             <TextBlock Grid.Row="2" Grid.Column="0" Text="List File" Grid.ColumnSpan="2" />
             <TextBox Grid.Row="2" Grid.Column="1" x:Name="textbox_listFile" />
@@ -98,9 +98,9 @@
                 <RowDefinition Height="24" />
             </Grid.RowDefinitions>
 
-            <Button Grid.Row="0" Grid.Column="1" Content="Copy Node" Click="CopyNode"/>
+            <!--<Button Grid.Row="0" Grid.Column="1" Content="Copy Node" Click="CopyNode"/>
             <Button Grid.Row="0" Grid.Column="2" Content="Paste Node" Click="InsertNode"/>
-          <Button Grid.Row="0" Grid.Column="3" Content="Delete Node" Click="DeleteNode"/>
+            <Button Grid.Row="0" Grid.Column="3" Content="Delete Node" Click="DeleteNode"/>-->
         </Grid>
 
         <Grid DockPanel.Dock="Top" Margin="5">

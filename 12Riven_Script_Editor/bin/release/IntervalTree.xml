@@ -1,0 +1,129 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>IntervalTree</name>
+    </assembly>
+    <members>
+        <member name="T:IntervalTree.IIntervalTree`2">
+            <summary>
+            The standard interval tree implementation. Keeps a root node and forwards all queries to it.
+            Whenever new items are added or items are removed, the tree goes temporarily "out of sync", which means that the
+            internal index is not updated immediately, but upon the next query operation.    
+            </summary>
+            <typeparam name="TKey">The type of the range.</typeparam>
+            <typeparam name="TValue">The type of the data items.</typeparam>
+        </member>
+        <member name="P:IntervalTree.IIntervalTree`2.Values">
+            <summary>
+            Returns all items contained in the tree.
+            </summary>
+        </member>
+        <member name="P:IntervalTree.IIntervalTree`2.Count">
+            <summary>
+            Gets the number of elements contained in the tree.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Query(`0)">
+            <summary>
+            Performs a point query with a single value. All items with overlapping ranges are returned.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Query(`0,`0)">
+            <summary>
+            Performs a range query. All items with overlapping ranges are returned.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Add(`0,`0,`1)">
+            <summary>
+            Adds the specified item.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Remove(`1)">
+            <summary>
+            Removes the specified item.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Remove(System.Collections.Generic.IEnumerable{`1})">
+            <summary>
+            Removes the specified items.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IIntervalTree`2.Clear">
+            <summary>
+            Removes all elements from the range tree.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IntervalTree`2.#ctor">
+            <summary>
+            Initializes an empty tree.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IntervalTree`2.#ctor(System.Collections.Generic.IComparer{`0})">
+            <summary>
+            Initializes an empty tree.
+            </summary>
+        </member>
+        <member name="T:IntervalTree.IntervalTreeNode`2">
+            <summary>
+            A node of the range tree. Given a list of items, it builds
+            its subtree. Also contains methods to query the subtree.
+            Basically, all interval tree logic is here.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IntervalTreeNode`2.#ctor(System.Collections.Generic.IComparer{`0})">
+            <summary>
+            Initializes an empty node.
+            </summary>
+            <param name="comparer">The comparer used to compare two items.</param>
+        </member>
+        <member name="M:IntervalTree.IntervalTreeNode`2.#ctor(System.Collections.Generic.IList{IntervalTree.RangeValuePair{`0,`1}},System.Collections.Generic.IComparer{`0})">
+            <summary>
+            Initializes a node with a list of items, builds the sub tree.
+            </summary>
+            <param name="items">The items that should be added to this node</param>
+            <param name="comparer">The comparer used to compare two items.</param>
+        </member>
+        <member name="M:IntervalTree.IntervalTreeNode`2.Query(`0)">
+            <summary>
+            Performs a point query with a single value.
+            All items with overlapping ranges are returned.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IntervalTreeNode`2.Query(`0,`0)">
+            <summary>
+            Performs a range query.
+            All items with overlapping ranges are returned.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.IntervalTreeNode`2.System#Collections#Generic#IComparer{IntervalTree#RangeValuePair{TKey,TValue}}#Compare(IntervalTree.RangeValuePair{`0,`1},IntervalTree.RangeValuePair{`0,`1})">
+            <summary>
+            Returns less than 0 if this range's From is less than the other, greater than 0 if greater.
+            If both are equal, the comparison of the To values is returned.
+            0 if both ranges are equal.
+            </summary>
+            <param name="x">The first item.</param>
+            <param name="y">The other item.</param>
+            <returns></returns>
+        </member>
+        <member name="T:IntervalTree.RangeValuePair`2">
+            <summary>
+            Represents a range of values.
+            Both values must be of the same type and comparable.
+            </summary>
+            <typeparam name="TKey">Type of the values.</typeparam>
+        </member>
+        <member name="M:IntervalTree.RangeValuePair`2.#ctor(`0,`0,`1)">
+            <summary>
+            Initializes a new <see cref="T:IntervalTree.RangeValuePair`2"/> instance.
+            </summary>
+        </member>
+        <member name="M:IntervalTree.RangeValuePair`2.ToString">
+            <summary>
+            Returns a <see cref="T:System.String"/> that represents this instance.
+            </summary>
+            <returns>
+            A <see cref="T:System.String"/> that represents this instance.
+            </returns>
+        </member>
+    </members>
+</doc>

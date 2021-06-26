@@ -22,6 +22,7 @@ using Microsoft.WindowsAPICodePack.Dialogs;
 using Riven_Script_Editor.Tokens;
 using Riven_Script_Editor.FileTypes;
 using System.Configuration;
+using System.Text.RegularExpressions;
 
 namespace Riven_Script_Editor
 {
@@ -53,7 +54,7 @@ namespace Riven_Script_Editor
             this.Closing += MainWindow_Closing;
 
             textbox_inputFolder.Text = GetConfig("input_folder");
-            textbox_inputFolderJp.Text = GetConfig("input_folder_jp");
+            //textbox_inputFolderJp.Text = GetConfig("input_folder_jp");
             textbox_listFile.Text = GetConfig("list_file");
             textbox_exportedAfs.Text = GetConfig("exported_afs");
             checkbox_SearchCaseSensitive.IsChecked = GetConfig("case_sensitive") == "1";
@@ -67,7 +68,7 @@ namespace Riven_Script_Editor
             MenuViewLabel.IsChecked = GetConfig("view_label", "1") == "1";
 
             textbox_inputFolder.TextChanged += (sender, ev) => { UpdateConfig("input_folder", textbox_inputFolder.Text); BrowseInputFolder(null, null); };
-            textbox_inputFolderJp.TextChanged += (sender, ev) => UpdateConfig("input_folder_jp", textbox_inputFolderJp.Text);;
+            //textbox_inputFolderJp.TextChanged += (sender, ev) => UpdateConfig("input_folder_jp", textbox_inputFolderJp.Text);;
             textbox_listFile.TextChanged += (sender, ev) => UpdateConfig("list_file", textbox_listFile.Text);
             textbox_exportedAfs.TextChanged += (sender, ev) => UpdateConfig("exported_afs", textbox_exportedAfs.Text);
             checkbox_SearchCaseSensitive.Checked += (sender, ev) => UpdateConfig("case_sensitive", "1");
@@ -109,7 +110,7 @@ namespace Riven_Script_Editor
 
                 if (dialogResult == MessageBoxResult.Yes)
                 {
-                    string outPath = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content);
+                    string outPath = System.IO.Path.Combine(folder, filename);
                     byte[] output = Tokenizer.AssembleAsData();
                     var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
                     stream_out.Write(output, 0, output.Length);
@@ -200,24 +201,33 @@ namespace Riven_Script_Editor
             }
             
             lvList.Clear();
-
+            Regex sceneNamePattern = new Regex("^([A-z]{2}[0-9]{2}).*");
             // Populate the list
+
+            string[] filepaths = Directory.GetFiles(folder, "*.BIN", SearchOption.TopDirectoryOnly);
             
-            string[] filenames = Directory.GetFiles(folder, "*.BIN", SearchOption.TopDirectoryOnly);
-            foreach (var filename in filenames)
-                lvList.Add(new ListViewItem() { Content = System.IO.Path.GetFileName(filename) });
+            foreach (var filePath in filepaths)
+            {
+                string filename = System.IO.Path.GetFileName(filePath);
+                if (filename.Equals("DATA.BIN") || filename.Equals("Repi.BIN") || sceneNamePattern.IsMatch(filename))
+                {
+                    lvList.Add(new ListViewItem() { Content = System.IO.Path.GetFileName(filename) });
+                }
+                
+            }
+                
 
             // Clicking the file name will load the file
             listviewFiles.SelectionChanged += ListViewFiles_SelectionChanged;
         }
 
-        private void BrowseInputFolderJp(object sender, RoutedEventArgs e)
-        {
-            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-            dialog.IsFolderPicker = true;
-            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                textbox_inputFolderJp.Text = dialog.FileName;
-        }
+        //private void BrowseInputFolderJp(object sender, RoutedEventArgs e)
+        //{
+        //    CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+        //    dialog.IsFolderPicker = true;
+        //    if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+        //        textbox_inputFolderJp.Text = dialog.FileName;
+        //}
 
         private void BrowseFilelist(object sender, RoutedEventArgs e) {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
@@ -257,208 +267,6 @@ namespace Riven_Script_Editor
                 CommandViewBox vb = DataContext as CommandViewBox;
                 vb.MyListItems.RemoveAt(idx);
             }
-        }
-
-        private void AddFadeToBlack(object sender, RoutedEventArgs e)
-        {
-            //if (ListView1.SelectedIndex > -1)
-            //{
-            //    int idx = ListView1.SelectedIndex + 1;
-
-            //    var t1 = new TokenFadeExStart(true);
-            //    t1.Transition = 144;
-            //    t1.Duration = 30;
-            //    t1.Unknown3 = 4096;
-            //    var t2 = new TokenFadeExWait(true);
-            //    var t3 = new TokenGraphDisp(true);
-            //    t3.Entries[0].ImageNumber = 256;
-            //    t3.Entries[0].Unknown2 = 7935;
-            //    t3.Entries[0].FileDescription = 4096;
-            //    var t4 = new TokenFadeExStart(true);
-            //    t4.Transition = 127;
-            //    t4.Duration = 1;
-            //    t4.Unknown3 = 4096;
-            //    var t5 = new TokenFadeExWait(true);
-
-            //    // =================
-            //    t1.UpdateData();
-            //    t2.UpdateData();
-            //    t3.UpdateData();
-            //    t4.UpdateData();
-            //    t5.UpdateData();
-
-            //    Tokenizer.Tokens.Insert(idx, t1);
-            //    Tokenizer.Tokens.Insert(idx+1, t2);
-            //    Tokenizer.Tokens.Insert(idx+2, t3);
-            //    Tokenizer.Tokens.Insert(idx+3, t4);
-            //    Tokenizer.Tokens.Insert(idx+4, t5);
-
-            //    CommandViewBox vb = DataContext as CommandViewBox;
-
-            //    vb.MyListItems.Insert(idx, t1);
-            //    vb.MyListItems.Insert(idx+1, t2);
-            //    vb.MyListItems.Insert(idx+2, t3);
-            //    vb.MyListItems.Insert(idx+3, t4);
-            //    vb.MyListItems.Insert(idx+4, t5);
-
-            //    ListView1.SelectedIndex += 5;
-            //}
-        }
-
-        private void AddFadeFromBlack(object sender, RoutedEventArgs e)
-        {
-            //if (ListView1.SelectedIndex > -1)
-            //{
-            //    int idx = ListView1.SelectedIndex + 1;
-
-            //    var t1 = new TokenFadeExStart(true);
-            //    t1.Transition = 128;
-            //    t1.Duration = 1;
-            //    t1.Unknown3 = 0;
-            //    var t2 = new TokenFadeExWait(true);
-            //    var t3 = new TokenGraphDisp(true);
-            //    t3.Entries[0].ImageNumber = 256;
-            //    t3.Entries[0].Unknown2 = 7935;
-            //    t3.Entries[0].FileDescription = 4100;
-            //    var t4 = new TokenFadeExStart(true);
-            //    t4.Transition = 127;
-            //    t4.Duration = 60;
-            //    t4.Unknown3 = 4096;
-            //    var t5 = new TokenFadeExWait(true);
-
-            //    // =================
-            //    t1.UpdateData();
-            //    t2.UpdateData();
-            //    t3.UpdateData();
-            //    t4.UpdateData();
-            //    t5.UpdateData();
-
-            //    Tokenizer.Tokens.Insert(idx, t1);
-            //    Tokenizer.Tokens.Insert(idx + 1, t2);
-            //    Tokenizer.Tokens.Insert(idx + 2, t3);
-            //    Tokenizer.Tokens.Insert(idx + 3, t4);
-            //    Tokenizer.Tokens.Insert(idx + 4, t5);
-
-            //    CommandViewBox vb = DataContext as CommandViewBox;
-
-            //    vb.MyListItems.Insert(idx, t1);
-            //    vb.MyListItems.Insert(idx + 1, t2);
-            //    vb.MyListItems.Insert(idx + 2, t3);
-            //    vb.MyListItems.Insert(idx + 3, t4);
-            //    vb.MyListItems.Insert(idx + 4, t5);
-
-            //    ListView1.SelectedIndex += 5;
-            //}
-        }
-
-        private void AddFlashWhite(object sender, RoutedEventArgs e)
-        {
-            //if (ListView1.SelectedIndex > -1)
-            //{
-            //    int idx = ListView1.SelectedIndex + 1;
-
-            //    var t1 = new TokenFadeExStart(true);
-            //    t1.Transition = 144;
-            //    t1.Duration = 30;
-            //    t1.Unknown3 = 4095;
-            //    var t2 = new TokenFadeExWait(true);
-            //    var t3 = new TokenGraphDisp(true);
-            //    t3.Entries[0].ImageNumber = 256;
-            //    t3.Entries[0].Unknown2 = 7935;
-            //    t3.Entries[0].FileDescription = 4100;
-            //    var t4 = new TokenFadeExStart(true);
-            //    t4.Transition = 127;
-            //    t4.Duration = 30;
-            //    t4.Unknown3 = 4096;
-            //    var t5 = new TokenFadeExWait(true);
-
-            //    // =================
-            //    t1.UpdateData();
-            //    t2.UpdateData();
-            //    t3.UpdateData();
-            //    t4.UpdateData();
-            //    t5.UpdateData();
-
-            //    Tokenizer.Tokens.Insert(idx, t1);
-            //    Tokenizer.Tokens.Insert(idx + 1, t2);
-            //    Tokenizer.Tokens.Insert(idx + 2, t3);
-            //    Tokenizer.Tokens.Insert(idx + 3, t4);
-            //    Tokenizer.Tokens.Insert(idx + 4, t5);
-
-            //    CommandViewBox vb = DataContext as CommandViewBox;
-
-            //    vb.MyListItems.Insert(idx, t1);
-            //    vb.MyListItems.Insert(idx + 1, t2);
-            //    vb.MyListItems.Insert(idx + 2, t3);
-            //    vb.MyListItems.Insert(idx + 3, t4);
-            //    vb.MyListItems.Insert(idx + 4, t5);
-
-            //    ListView1.SelectedIndex += 5;
-            //}
-        }
-
-        private void AddGotoScript(object sender, RoutedEventArgs e)
-        {
-            //if (ListView1.SelectedIndex > -1)
-            //{
-            //    int idx = ListView1.SelectedIndex + 1;
-
-            //    var t1 = new TokenFileRead(true);
-            //    var t2 = new TokenFileWait(true);
-            //    var t3 = new TokenRegCalc(true);
-            //    var t4 = new TokenExternalGoto(true);
-
-            //    // =================
-            //    t1.UpdateData();
-            //    t2.UpdateData();
-            //    t3.UpdateData();
-            //    t4.UpdateData();
-
-            //    Tokenizer.Tokens.Insert(idx, t1);
-            //    Tokenizer.Tokens.Insert(idx + 1, t2);
-            //    Tokenizer.Tokens.Insert(idx + 2, t3);
-            //    Tokenizer.Tokens.Insert(idx + 3, t4);
-
-            //    CommandViewBox vb = DataContext as CommandViewBox;
-
-            //    vb.MyListItems.Insert(idx, t1);
-            //    vb.MyListItems.Insert(idx + 1, t2);
-            //    vb.MyListItems.Insert(idx + 2, t3);
-            //    vb.MyListItems.Insert(idx + 3, t4);
-
-            //    ListView1.SelectedIndex += 4;
-            //}
-        }
-
-        private void AddStopMusic(object sender, RoutedEventArgs e)
-        {
-            //if (ListView1.SelectedIndex > -1)
-            //{
-            //    int idx = ListView1.SelectedIndex + 1;
-
-            //    var t1 = new TokenBgmSpeed(true);
-            //    t1.Unknown1 = 128;
-            //    t1.Unknown2 = 825;
-            //    var t2 = new TokenBgmWait(true);
-            //    var t3 = new TokenBgmDel(true);
-
-            //    // =================
-            //    t1.UpdateData();
-            //    t2.UpdateData();
-            //    t3.UpdateData();
-
-            //    Tokenizer.Tokens.Insert(idx, t1);
-            //    Tokenizer.Tokens.Insert(idx + 1, t2);
-            //    Tokenizer.Tokens.Insert(idx + 2, t3);
-
-            //    CommandViewBox vb = DataContext as CommandViewBox;
-
-            //    vb.MyListItems.Insert(idx, t1);
-            //    vb.MyListItems.Insert(idx + 1, t2);
-            //    vb.MyListItems.Insert(idx + 2, t3);
-
-            //    ListView1.SelectedIndex += 3;
-            //}
         }
 
         private void CopyNode(object sender, RoutedEventArgs e)

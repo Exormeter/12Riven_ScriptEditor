@@ -53,6 +53,7 @@ namespace Riven_Script_Editor.Tokens
 
            
             CompleteMessage = _dataWrapper.ReadString(MsgPtr.MsgPtrString);
+            MessagePointerList.Add(MsgPtr);
 
             int idx1 = CompleteMessage.IndexOf("「");
             int idx2 = CompleteMessage.IndexOf("」");
@@ -134,7 +135,7 @@ namespace Riven_Script_Editor.Tokens
             base.AddRichTextbox(window, "Message", "Message");
             base.AddTextbox(window, "Terminator", "MessageEnding");
             base.AddRichTextbox(window, "Complete Text", "CompleteMessage", false);
-            base.AddTranslationButton(window, "Translation", "MessageJp");
+            //base.AddTranslationButton(window, "Translation", "MessageJp");
 
             base.AddSpacer(window);
         }
