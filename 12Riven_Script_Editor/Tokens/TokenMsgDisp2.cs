@@ -116,9 +116,9 @@ namespace Riven_Script_Editor.Tokens
 
             if (Speaker.Length > 0)
                 //CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
-                CompleteMessage = Speaker + "「" + message_spacing + "」" + MessageEnding;
+                CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
             else
-                CompleteMessage = message_spacing + "" + MessageEnding;
+                CompleteMessage = Message + "" + MessageEnding;
 
             Data2 = CompleteMessage;
         }
