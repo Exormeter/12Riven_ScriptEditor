@@ -7,7 +7,7 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenSysMessage : Token
     {
-        public new const TokenType Type = TokenType.sys_disp;
+        public new const TokenType Type = TokenType.select2;
 
 
         private readonly MessagePointer sysPtr;

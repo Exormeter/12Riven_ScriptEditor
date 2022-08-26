@@ -7,7 +7,7 @@ namespace Riven_Script_Editor.Tokens
     class TokenSelectDisp2 : Token
     {
 
-        public new const TokenType Type = TokenType.sel_disp2;
+        public new const TokenType Type = TokenType.select;
        
         public List<SelectDisp2Entry> Entries = new List<SelectDisp2Entry>();
 

@@ -7,7 +7,7 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenMsgDisp2 : Token
     {
-        public new const TokenType Type = TokenType.msg_disp2;
+        public new const TokenType Type = TokenType.message;
 
         public MessagePointer MsgPtr;
 
@@ -115,7 +115,6 @@ namespace Riven_Script_Editor.Tokens
             string message_spacing = Utility.StringDoubleSpace(Message);
 
             if (Speaker.Length > 0)
-                //CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
                 CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
             else
                 CompleteMessage = Message + "" + MessageEnding;
