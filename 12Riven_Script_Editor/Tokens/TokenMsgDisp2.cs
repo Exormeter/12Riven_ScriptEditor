@@ -116,9 +116,9 @@ namespace Riven_Script_Editor.Tokens
             string message_spacing = Utility.StringDoubleSpace(Message);
 
             if (Speaker.Length > 0)
-                CompleteMessage = Speaker + "「" + Message + "」" + MessageEnding;
+                CompleteMessage = Speaker + "「" + message_spacing + "」" + MessageEnding;
             else
-                CompleteMessage = Message + "" + MessageEnding;
+                CompleteMessage = message_spacing + "" + MessageEnding;
 
             Data2 = CompleteMessage;
         }
