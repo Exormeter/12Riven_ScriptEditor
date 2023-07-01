@@ -14,7 +14,6 @@ namespace Riven_Script_Editor.Tokens
 {
     public abstract class ATokenizer
     {
-        protected List<Token> Tokens;
         protected DataWrapper data;
         public ATokenizer(DataWrapper wrapper)
         {
@@ -28,8 +27,8 @@ namespace Riven_Script_Editor.Tokens
         public abstract List<Token> ParseData();
 
 
-        public abstract byte[] AssembleAsData();
+        public abstract byte[] AssembleAsData(List<Token> tokens);
 
-        public abstract byte[] AssembleAsText(string title);
+        public abstract byte[] AssembleAsText(string title, List<Token> tokens);
     }
 }

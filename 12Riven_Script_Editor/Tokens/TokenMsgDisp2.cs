@@ -35,6 +35,7 @@ namespace Riven_Script_Editor.Tokens
 
         private void init()
         {
+            Splitable = "No";
             MsgPtr = new MessagePointer(7, 6, _byteCommand);
             _description = "Displays text spoken by a character.\n" +
             "\nSpeaker ID: The sprite to animate" +

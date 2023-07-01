@@ -13,6 +13,7 @@ namespace Riven_Script_Editor.Tokens
 
         public TokenSelectDisp(DataWrapper wrapper, byte[] byteCommand, int pos): base(wrapper, byteCommand, pos)
         {
+            Splitable = "No";
             _command = "Select Disp";
             _description = "Display choices [@TODO: Fix jump/label handling]";
             num_entries = _dataWrapper.ReadUInt8(1);
@@ -94,7 +95,8 @@ namespace Riven_Script_Editor.Tokens
         public override void UpdateGui(MainWindow window)
         {
             base.UpdateGui(window);
-            PopulateEntryList(window, Entries, (sender, ev) => {
+            PopulateEntryList(window, Entries, (sender, ev) =>
+            {
                 if (ev.AddedItems.Count == 0 || !(ev.AddedItems[0] is SelectDispEntry))
                     return;
 

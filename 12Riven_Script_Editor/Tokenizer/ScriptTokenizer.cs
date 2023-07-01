@@ -21,7 +21,6 @@ namespace Riven_Script_Editor.Tokens
 {
     class ScriptTokenizer : ATokenizer
     {
-        private List<Token> Tokens;
         private Token trailerToken;
         bool _changed_file;
         int pos;
@@ -37,16 +36,17 @@ namespace Riven_Script_Editor.Tokens
                     x.Title += " *";
             }
         }
+        private ScriptListFileManager _listFileManager;
 
 
-        public ScriptTokenizer(DataWrapper wrapper) : base(wrapper)
+        public ScriptTokenizer(DataWrapper wrapper, ScriptListFileManager scriptListFileManager) : base(wrapper)
         {
-            
+            _listFileManager = scriptListFileManager;
         }
 
         public override List<Token> ParseData()
         {
-            Tokens = new List<Token>();
+            var tokens = new List<Token>();
             pos = 0;
 
             int lenght = Convert.ToInt32(data[pos]);
@@ -55,16 +55,16 @@ namespace Riven_Script_Editor.Tokens
 
             TokenHeader headerToken = new TokenHeader(data, byteCommand, pos);
 
-            Tokens.Add(headerToken);
+            tokens.Add(headerToken);
             pos += headerToken.Length;
 
             while(true)
             {
-                Token token = ReadNextToken();
+                Token token = ReadNextToken(tokens);
                 pos += token.Length;
 
                 
-                Tokens.Add(token);
+                tokens.Add(token);
                 
                 if(token.OpCode == 0x0D)
                 {
@@ -72,28 +72,45 @@ namespace Riven_Script_Editor.Tokens
                 }
             }
 
-            TokenMsgDisp2 lastMsgToken = (TokenMsgDisp2)Tokens.Last(tempToken => tempToken is TokenMsgDisp2);
+            foreach(Token t in tokens.Where(token => token is TokenJump))
+            {
+                TokenJump jumpToken = (TokenJump)t;
 
-            int trailerStart = lastMsgToken.MsgPtr.MsgPtrString + lastMsgToken.CompleteMessage.Length;
+                jumpToken.ReferencedToken = tokens.Find(token => token.Offset == jumpToken.GetReferencedOffset());
+                int jumpTokenIndex = tokens.IndexOf(jumpToken);
+                int referncedTokenIndex = tokens.IndexOf(jumpToken.ReferencedToken);
+                int distance = Math.Abs(jumpTokenIndex - referncedTokenIndex);
+                int index = Math.Min(jumpTokenIndex, referncedTokenIndex);
+                int stopIndex = index + distance + 1;
+                for (; index < stopIndex; index++)
+                {
+                    tokens[index].Splitable = "No";
+                }
+            }
+
+            TokenMsgDisp2 lastMsgToken = (TokenMsgDisp2)tokens.Last(tempToken => tempToken is TokenMsgDisp2);
+
+            int trailerStart = lastMsgToken.MsgPtr.MsgPtrString + lastMsgToken.GetMessagesBytes().Length;
             int trailerLenght = data.RawArray.Length - trailerStart;
             byteCommand = data.RawArray.Skip(trailerStart).Take(trailerLenght).ToArray();
             trailerToken = new Token(data, byteCommand, 0);
-            return Tokens;
+            tokens.Add(trailerToken);
+            return tokens;
         }
 
-        public override byte[] AssembleAsData()
-        {
+        public override byte[] AssembleAsData(List<Token> tokens)
+         {
             int offsetTextSection = 0;
             int pos = 0;
             Stream stream = new MemoryStream();
-
-            Tokens.ForEach(token => offsetTextSection += token.Length);
+            updateOffsets(tokens);
+            tokens.ForEach(token => offsetTextSection += token.Length);
 
             //padding with 0 until textSection begins
             byte[] fill = new Byte[offsetTextSection];
             stream.Write(fill, 0, fill.Length);
 
-            foreach (var token in Tokens)
+            foreach (var token in tokens)
             {
                 token.MessagePointerList.Sort();
                 foreach (MessagePointer messagePointer in token.MessagePointerList)
@@ -122,7 +139,7 @@ namespace Riven_Script_Editor.Tokens
             return output;
         }
 
-        public override byte[] AssembleAsText(string title)
+        public override byte[] AssembleAsText(string title, List<Token> tokens)
         {
             Stream memoryStream = new MemoryStream();
             StreamWriter streamWrite = new StreamWriter(memoryStream, Encoding.GetEncoding(932));
@@ -131,7 +148,7 @@ namespace Riven_Script_Editor.Tokens
             streamWrite.WriteLine("");
             streamWrite.WriteLine("");
             int index = 1;
-            foreach (var token in Tokens)
+            foreach (var token in tokens)
             {
                 string message = "";
                 if (token is TokenMsgDisp2 tokenMsgDisp2)
@@ -164,19 +181,31 @@ namespace Riven_Script_Editor.Tokens
             return output;
         }
 
-        public Token ReadNextToken()
+        private Token ReadNextToken(List<Token> pastParsedTokens)
         {
             TokenType opcode = (TokenType)data[pos];
             int lenght = Convert.ToInt32(data[pos + 1]);
 
             byte[] byteCommand = data.RawArray.Skip(pos).Take(lenght).ToArray();
 
-            switch (opcode)
+            switch (opcode) 
             {
+                case TokenExtGoto.Type: return new TokenExtGoto(data, byteCommand, pos, _listFileManager.CompleteFilenameList[byteCommand[2]]);
                 case TokenMsgDisp2.Type: return new TokenMsgDisp2(data, byteCommand, pos);
                 case TokenSelectDisp2.Type: return new TokenSelectDisp2(data, byteCommand, pos);
                 case TokenSysMessage.Type: return new TokenSysMessage(data, byteCommand, pos);
+                case TokenJump.Type: return new TokenJump(data, byteCommand, pos, null);
                 default: return new Token(data, byteCommand, pos);
+            }
+        }
+
+        private void updateOffsets(List<Token> tokens)
+        {
+            int offset = 0;
+            foreach (Token t in tokens)
+            {
+                t.Offset = (UInt16)offset;
+                offset += t.Length;
             }
         }
     }

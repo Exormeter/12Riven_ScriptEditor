@@ -34,27 +34,36 @@ namespace Riven_Script_Editor
         ObservableCollection<ListViewItem> lvList = new ObservableCollection<ListViewItem>();
         string folder = "";
         string filename = "";
+        string splittedFilenameEnding = "_continued";
         bool searchEndOfFile = false;
         readonly Configuration config = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
         ATokenizer Tokenizer;
         private List<Token> tokenList;
-        Token clipBoardToken = null;
 
         public Grid Grid;
         public ListBox EntriesList;
+        public TextBlock ScriptSizeTextBlock;
+
+        public ScriptSizeNotifier scriptSizeNotifier;
+        public ScriptListFileManager scriptListFileManager;
 
         public bool ChangedFile { get; internal set; }
 
         public MainWindow()
         {
             InitializeComponent();
+
+            scriptListFileManager = new ScriptListFileManager(GetConfig("list_file"));
             Grid = ((MainWindow)Application.Current.MainWindow).GuiArea;
             EntriesList = ((MainWindow)Application.Current.MainWindow).listviewEntries;
-            listviewFiles.ItemsSource = lvList;
+            ScriptSizeTextBlock = ((MainWindow)Application.Current.MainWindow).ScriptSizeCounter;
+
+            listviewFiles.DataContext = scriptListFileManager;
+            listviewFiles.SelectionChanged += ListViewFiles_SelectionChanged;
+
             this.Closing += MainWindow_Closing;
 
             textbox_inputFolder.Text = GetConfig("input_folder");
-            //textbox_inputFolderJp.Text = GetConfig("input_folder_jp");
             textbox_listFile.Text = GetConfig("list_file");
             textbox_exportedAfs.Text = GetConfig("exported_afs");
             checkbox_SearchCaseSensitive.IsChecked = GetConfig("case_sensitive") == "1";
@@ -68,8 +77,7 @@ namespace Riven_Script_Editor
             MenuViewLabel.IsChecked = GetConfig("view_label", "1") == "1";
 
             textbox_inputFolder.TextChanged += (sender, ev) => { UpdateConfig("input_folder", textbox_inputFolder.Text); BrowseInputFolder(null, null); };
-            //textbox_inputFolderJp.TextChanged += (sender, ev) => UpdateConfig("input_folder_jp", textbox_inputFolderJp.Text);;
-            textbox_listFile.TextChanged += (sender, ev) => UpdateConfig("list_file", textbox_listFile.Text);
+            textbox_listFile.TextChanged += (sender, ev) => { UpdateConfig("list_file", textbox_listFile.Text); LoadScriptList(textbox_listFile.Text); };
             textbox_exportedAfs.TextChanged += (sender, ev) => UpdateConfig("exported_afs", textbox_exportedAfs.Text);
             checkbox_SearchCaseSensitive.Checked += (sender, ev) => UpdateConfig("case_sensitive", "1");
             checkbox_SearchCaseSensitive.Unchecked += (sender, ev) => UpdateConfig("case_sensitive", "0");
@@ -78,8 +86,6 @@ namespace Riven_Script_Editor
             textbox_search.TextChanged += (sender, ev) => UpdateConfig("last_search", textbox_search.Text);
             textbox_search.KeyDown += Textbox_search_KeyDown;
             BrowseInputFolder(null, null);
-
-            AddHotKeys();
             Application.Current.DispatcherUnhandledException += Current_DispatcherUnhandledException;
         }
 
@@ -111,7 +117,7 @@ namespace Riven_Script_Editor
                 if (dialogResult == MessageBoxResult.Yes)
                 {
                     string outPath = System.IO.Path.Combine(folder, filename);
-                    byte[] output = Tokenizer.AssembleAsData();
+                    byte[] output = Tokenizer.AssembleAsData(tokenList);
                     var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
                     stream_out.Write(output, 0, output.Length);
                     stream_out.Close();
@@ -146,93 +152,38 @@ namespace Riven_Script_Editor
             config.Save();
         }
 
-        private void AddHotKeys()
-        {
-            RoutedCommand com;
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Control));
-            CommandBindings.Add(new CommandBinding(com, Menu_File_Save));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.F, ModifierKeys.Control));
-            CommandBindings.Add(new CommandBinding(com, SearchFocus));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.E, ModifierKeys.Control));
-            CommandBindings.Add(new CommandBinding(com, Menu_Export_Mac));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.F3, ModifierKeys.None));
-            CommandBindings.Add(new CommandBinding(com, SearchNext));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.F4, ModifierKeys.None));
-            CommandBindings.Add(new CommandBinding(com, SearchPrev));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.F5, ModifierKeys.None));
-            CommandBindings.Add(new CommandBinding(com, FocusTextNext));
-
-            com = new RoutedCommand();
-            com.InputGestures.Add(new KeyGesture(Key.F6, ModifierKeys.None));
-            CommandBindings.Add(new CommandBinding(com, FocusTextPrev));
-        }
-
         private void BrowseInputFolder(object sender, RoutedEventArgs e)
         {
             if (sender == null)
             {
                 folder = textbox_inputFolder.Text;
-                if (!Directory.Exists(folder))
-                {
-                    lvList.Clear();
-                    return;
-                }
+                return;
             }
 
-            else
-            {
-                CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-                dialog.IsFolderPicker = true;
-                if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-                    textbox_inputFolder.Text = dialog.FileName;
-                return; // Return because changing the textbox will trigger this function again
-            }
-            
-            lvList.Clear();
-            Regex sceneNamePattern = new Regex("^([A-z]{2}[0-9]{2}).*");
-            // Populate the list
-
-            string[] filepaths = Directory.GetFiles(folder, "*.BIN", SearchOption.TopDirectoryOnly);
-            
-            foreach (var filePath in filepaths)
-            {
-                string filename = System.IO.Path.GetFileName(filePath);
-                if (filename.Equals("DATA.BIN") || filename.Equals("Repi.BIN") || sceneNamePattern.IsMatch(filename))
-                {
-                    lvList.Add(new ListViewItem() { Content = System.IO.Path.GetFileName(filename) });
-                }
-                
-            }
-                
-
-            // Clicking the file name will load the file
-            listviewFiles.SelectionChanged += ListViewFiles_SelectionChanged;
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                textbox_inputFolder.Text = dialog.FileName;
         }
 
-        //private void BrowseInputFolderJp(object sender, RoutedEventArgs e)
-        //{
-        //    CommonOpenFileDialog dialog = new CommonOpenFileDialog();
-        //    dialog.IsFolderPicker = true;
-        //    if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
-        //        textbox_inputFolderJp.Text = dialog.FileName;
-        //}
+        private void LoadScriptList(string filepath)
+        {
+            scriptListFileManager.Load(filepath);
+        }
+
+        private void SplitScriptAtIndex(object sender, RoutedEventArgs e)
+        {
+
+        }
 
         private void BrowseFilelist(object sender, RoutedEventArgs e) {
             CommonOpenFileDialog dialog = new CommonOpenFileDialog();
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
                 textbox_listFile.Text = dialog.FileName;
+            }
+                
+
         }
 
         private void BrowseExportedAfs(object sender, RoutedEventArgs e) {
@@ -256,44 +207,6 @@ namespace Riven_Script_Editor
             Search(false);
         }
 
-        private void DeleteNode(object sender, RoutedEventArgs e)
-        {
-            if (TokenListView.SelectedIndex > -1)
-            {
-                int idx = TokenListView.SelectedIndex;
-                TokenListView.SelectedIndex += 1;
-
-                tokenList.RemoveAt(idx);
-                CommandViewBox vb = DataContext as CommandViewBox;
-                vb.MyListItems.RemoveAt(idx);
-            }
-        }
-
-        private void CopyNode(object sender, RoutedEventArgs e)
-        {
-            // @TODO
-            if (TokenListView.SelectedIndex > -1)
-            {
-                clipBoardToken = tokenList[TokenListView.SelectedIndex];
-            }
-
-        }
-
-
-        private void InsertNode(object sender, RoutedEventArgs e)
-        {
-            // @TODO
-            if (TokenListView.SelectedIndex > -1 && clipBoardToken != null)
-            {
-                int idx = TokenListView.SelectedIndex + 1;
-                tokenList.Insert(idx, clipBoardToken);
-                CommandViewBox vb = DataContext as CommandViewBox;
-                vb.MyListItems.Insert(idx, clipBoardToken.Clone());
-                TokenListView.SelectedIndex += 1;
-            }
-
-
-        }
         private void Search(bool next)
         {
             if (textbox_search.Text == "")
@@ -526,26 +439,25 @@ namespace Riven_Script_Editor
                 (TokenListView.SelectedItem as Token).UpdateGui(this);
         }
         
-        private void FocusTextPrev(object sender, RoutedEventArgs e)
-        {
-            //GoToNextText(false);
-        }
-        
         private void Menu_File_Save(object sender, RoutedEventArgs e)
         {
-            string fname;
+            string fileName;
             try
             {
-                fname = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
+                fileName = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
             } catch { return;  }
+            byte[] output = Tokenizer.AssembleAsData(tokenList.ToList());
+            SaveFile(fileName, output);
+        }
 
-
+        private void SaveFile(string fileName, byte[] data)
+        {
             try
             {
-                string outPath = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content);
-                byte[] output = Tokenizer.AssembleAsData();
+                string outPath = System.IO.Path.Combine(folder, fileName);
+                
                 var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
-                stream_out.Write(output, 0, output.Length);
+                stream_out.Write(data, 0, data.Length);
                 stream_out.Close();
             }
             catch (Exception ex)
@@ -576,22 +488,18 @@ namespace Riven_Script_Editor
 
         private void Menu_Export_Txt(object sender, RoutedEventArgs e)
         {
-            string fname;
+            string fileName;
             try
             {
-                fname = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
+                fileName = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
             }
             catch { return; }
 
 
             try
             {
-                string txt_filename = System.IO.Path.Combine(folder, (string)(listviewFiles.SelectedItem as ListViewItem).Content + ".txt");
-                var stream_out = new FileStream(txt_filename, FileMode.Create, FileAccess.ReadWrite);
-                byte[] output = Tokenizer.AssembleAsText((string)(listviewFiles.SelectedItem as ListViewItem).Content);
-                stream_out.Write(output, 0, output.Length);
-                stream_out.Close();
-
+                byte[] output = Tokenizer.AssembleAsText((string)(listviewFiles.SelectedItem as ListViewItem).Content, tokenList.ToList());
+                SaveFile(fileName, output);
             }
             catch (Exception ex)
             {
@@ -617,7 +525,7 @@ namespace Riven_Script_Editor
             if (!success)
                 return;
 
-            filename = (string)((ListViewItem)args.AddedItems[0]).Content;
+            filename = (string)args.AddedItems[0]; 
             string path_en = System.IO.Path.Combine(folder, filename);
 
             
@@ -628,95 +536,121 @@ namespace Riven_Script_Editor
             }
             else
             {
-                Tokenizer = new ScriptTokenizer(new DataWrapper(binData));
+                Tokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
             }
             tokenList = Tokenizer.ParseData();
+            ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
             ((MainWindow)Application.Current.MainWindow).Title = "12R Script: " + filename;
-            DataContext = new CommandViewBox(tokenList);
+            DataContext = new CommandViewBox(tokenList.ToList());
         }
 
         private void ListView1_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            //ContextMenu m = new ContextMenu();
-            //var token = (sender as ListViewItem).Content;
-            //if (token is TokenIf)
-            //{
-            //    var label = (token as TokenIf).LabelJump;
-            //    var v = new MenuItem() { Header = "Jump to " + label };
-            //    v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(label); };
-            //    m.Items.Add(v);
-            //}
-            //else if (token is TokenInternalGoto)
-            //{
-            //    var label = (token as TokenInternalGoto).LabelJump;
-            //    var v = new MenuItem() { Header = "Jump to " + label };
-            //    v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(label); };
-            //    m.Items.Add(v);
-            //}
-            //else if (token is TokenMsgDisp2)
-            //{
-            //    var labels = (token as TokenMsgDisp2).IdenticalJpLabels;
-            //    foreach (var label in labels)
-            //    {
-            //        var v = new MenuItem() { Header = "Identical to " + label };
-            //        v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(label); };
-            //        m.Items.Add(v);
-            //    }
-            //}
-            //else if (token is TokenSelectDisp2)
-            //{
-            //    var labels = (token as TokenSelectDisp2).IdenticalJpLabels;
-            //    foreach (var label in labels)
-            //    {
-            //        var v = new MenuItem() { Header = "Identical to " + label };
-            //        v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(label); };
-            //        m.Items.Add(v);
-            //    }
-            //}
+            ContextMenu contextMenu = new ContextMenu();
 
-            //foreach (var reflabel in (token as Token).ReferingLabels)
-            //{
-            //    var v = new MenuItem() { Header = "Jumped here from " + reflabel };
-            //    v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(reflabel); };
-            //    m.Items.Add(v);
-            //}
-            ///*
-            //else if (token is TokenMsgDisp2)
-            //{
-            //    var label = (token as TokenMsgDisp2).LabelJump;
-            //    var v = new MenuItem() { Header = "Jump to " + label };
-            //    v.Click += (sender2, arg) => { Tokenizer.JumpToLabel(label); };
-            //    m.Items.Add(v);
-            //}
-            //*/
+            MenuItem menuItemSplit = new MenuItem();
+            menuItemSplit.Header = "Split Script Here";
+            string scriptName = (string)listviewFiles.SelectedItem;
+            menuItemSplit.IsEnabled = !scriptName.Contains(splittedFilenameEnding);
+            menuItemSplit.Click += new RoutedEventHandler(ScriptSplitContextMenu_MouseUp);
+            contextMenu.Items.Add(menuItemSplit);
 
-            //if (m.Items.Count > 0)
-            //    ListView1.ContextMenu = m;
-            //else
-            //    ListView1.ContextMenu = null;
+            if (tokenList[TokenListView.SelectedIndex].OpCode == 0x0B)
+            {
+                //MenuItem menuItemJoin = new MenuItem();
+                //menuItemJoin.Header = "Join Scripts";
+                //menuItemJoin.Click += new RoutedEventHandler(JoinTokens_MouseUp);
+                //contextMenu.Items.Add(menuItemJoin);
+
+                MenuItem menuItemDelete = new MenuItem();
+                menuItemDelete.Header = "Delete Breakout Script";
+                menuItemDelete.Click += new RoutedEventHandler(DeleteTokens_MouseUp);
+                contextMenu.Items.Add(menuItemDelete);
+            }
+
+            TokenListView.ContextMenu = contextMenu;
+        }
+
+        //private void JoinTokens_MouseUp(Object sender, System.EventArgs e)
+        //{
+        //    TokenExtGoto token = (TokenExtGoto)tokenList[TokenListView.SelectedIndex];
+        //    FixExGotoIndexes(scriptListFileManager.getFilenameIndex(token.referencedFilename));
+        //    scriptListFileManager.RemoveFilename(token.referencedFilename);
+        //    byte[] binData = File.ReadAllBytes(System.IO.Path.Combine(folder, token.referencedFilename));
+        //    ScriptTokenizer scriptTokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
+        //    var breakoutTokenList = scriptTokenizer.ParseData();
+        //    breakoutTokenList.RemoveAt(0); //remove header
+        //    tokenList.RemoveRange(TokenListView.SelectedIndex, tokenList.Count() - TokenListView.SelectedIndex);
+        //    tokenList.AddRange(breakoutTokenList);
+        //}
+
+        private void ScriptSplitContextMenu_MouseUp(Object sender, System.EventArgs e) {
+            string breakoutScriptName = (string)listviewFiles.SelectedItem;
+            string[] scriptNameParts = breakoutScriptName.Split('.');
+            breakoutScriptName = scriptNameParts[0] + splittedFilenameEnding + "." + scriptNameParts[1];
+            byte scriptIndex = (byte)scriptListFileManager.AddFilename(breakoutScriptName);
+            var breakoutTokenList = tokenList.GetRange(TokenListView.SelectedIndex + 1, tokenList.Count - TokenListView.SelectedIndex - 1);
+            breakoutTokenList.Insert(0, tokenList[0]); //add copied header
+            var commandBytes = new byte[] {0x0B, 0x06, scriptIndex, 0x00 , 0x00, 0x00};
+            var callExtToken = new TokenExtGoto(null, commandBytes, 0, breakoutScriptName);
+            tokenList.Insert(TokenListView.SelectedIndex + 1, callExtToken);
+            DataContext = new CommandViewBox(tokenList);
+            ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
+            SaveFile(breakoutScriptName, Tokenizer.AssembleAsData(breakoutTokenList));
+            SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
+        }
+
+        private void DeleteTokens_MouseUp(Object sender, System.EventArgs e)
+        {
+            TokenExtGoto token = (TokenExtGoto)tokenList[TokenListView.SelectedIndex];
+            FixExGotoIndexes(scriptListFileManager.getFilenameIndex(token.referencedFilename));
+            scriptListFileManager.RemoveFilename(token.referencedFilename);
+            tokenList.RemoveAt(TokenListView.SelectedIndex);
+            SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
+            DataContext = new CommandViewBox(tokenList);
+        }
+
+        private void FixExGotoIndexes(int removedIndex)
+        {
+            foreach (string filename in scriptListFileManager.ScriptFilenameList)
+            {
+                if (filename.Equals("DATA.BIN")) continue;
+                string path_en = System.IO.Path.Combine(folder, filename);
+                byte[] binData = File.ReadAllBytes(path_en);
+                ScriptTokenizer tokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
+                var tokenListTemp = tokenizer.ParseData();
+                int index = tokenListTemp.FindIndex(token => token is TokenExtGoto);
+                if (index >= 0 && tokenListTemp[index].ByteCommand[2] > removedIndex)
+                {
+                    tokenListTemp[index].ByteCommand[2]--;
+                    SaveFile(filename, tokenizer.AssembleAsData(tokenListTemp));
+                }
+            }
+            
         }
     }
 
+
     public class CommandViewBox : INotifyPropertyChanged
     {
-        private ObservableCollection<Token> _myListItems;
-        public ObservableCollection<Token> MyListItems
+        private ObservableCollection<Token> _commandList;
+        public ObservableCollection<Token> CommandList
         {
-            get => _myListItems;
+            get => _commandList;
             set
             {
-                _myListItems = value;
-                OnPropertyChanged(nameof(MyListItems));
+                _commandList = value;
+                OnPropertyChanged(nameof(CommandList));
             }
         }
 
         public CommandViewBox(List<Token> tokenList)
         {
-            MyListItems = new ObservableCollection<Token>();
+            CommandList = new ObservableCollection<Token>();
 
             foreach (var token in tokenList)
             {
-                MyListItems.Add(token);
+                CommandList.Add(token);
             }
         }
 
@@ -726,16 +660,53 @@ namespace Riven_Script_Editor
             => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    public class TokenSelectorComboBoxItem
+    public class ScriptSizeNotifier : INotifyPropertyChanged
     {
-        public string Name { get; set; }
-        public Type Value { get; set; }
-        public override string ToString() { return this.Name; }
+        public event PropertyChangedEventHandler PropertyChanged;
+        private readonly List<Token> tokenList;
 
-        public TokenSelectorComboBoxItem(string text)
+        private int _size;
+
+
+        public ScriptSizeNotifier(List<Token> tokenList)
         {
-            this.Name = text;
-            this.Value = Type.GetType("R11_Script_Editor.Tokens.Token" + text);
+            this.tokenList = tokenList;
+            tokenList.ForEach(token => token.PropertyChanged += this.Token_PropertyChanged);
+            Size = CalculateScriptSize();
+        }
+
+
+        private void OnPropertyChanged(string property)
+        {
+            if (PropertyChanged != null)
+            {
+                PropertyChanged(this, new PropertyChangedEventArgs(property));
+            }
+        }
+
+        private void Token_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            Size = CalculateScriptSize();
+        }
+
+        private int CalculateScriptSize()
+        {
+            int size = 0;
+            tokenList.ForEach(token => size += token.Size);
+            return size;
+        }
+
+        public int Size
+        {
+            get
+            {
+                return _size;
+            }
+            set
+            {
+                _size = value;
+                OnPropertyChanged("Size");
+            }
         }
     }
 }

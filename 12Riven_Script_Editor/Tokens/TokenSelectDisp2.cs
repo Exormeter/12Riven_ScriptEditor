@@ -13,6 +13,7 @@ namespace Riven_Script_Editor.Tokens
 
         public TokenSelectDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank=false): base(wrapper, byteCommand, pos)
         {
+            Splitable = "No";
             _command = "Select Disp2";
             _description = "Display choices (version 2)";
 

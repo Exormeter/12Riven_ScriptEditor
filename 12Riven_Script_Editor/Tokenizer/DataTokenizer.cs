@@ -52,7 +52,7 @@ namespace Riven_Script_Editor
 
         public override List<Token> ParseData()
         {
-            Tokens = new List<Token>();
+            var tokens = new List<Token>();
             
             int pos = 0;
             byte[] byteCommand;
@@ -64,65 +64,65 @@ namespace Riven_Script_Editor
                 {
                     case Section.HEADER:
                         byteCommand = data.RawArray.Skip(pos).Take(Convert.ToInt32(data[pos])).ToArray();
-                        Tokens.Add(new TokenHeader(data, byteCommand, pos));
+                        tokens.Add(new TokenHeader(data, byteCommand, pos));
                         break;
 
                     case Section.NAMES:
-                        Tokens.Add(new TokenDataName(data, pos));
+                        tokens.Add(new TokenDataName(data, pos));
                         break;
 
                     case Section.ROUTE:
-                        Tokens.Add(new TokenDataRoute(data, pos));
+                        tokens.Add(new TokenDataRoute(data, pos));
                         break;
 
                     case Section.ROUTE2:
-                        Tokens.Add(new TokenDataRoute2(data, pos));
+                        tokens.Add(new TokenDataRoute2(data, pos));
                         break;
 
                     case Section.DATA:
                         byteCommand = data.RawArray.Skip(pos).Take(1436).ToArray();
-                        Tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1436));
+                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1436));
                         break;
 
                     case Section.SCENE_NAME:
-                        Tokens.Add(new TokenDataSceneName(data, pos));
+                        tokens.Add(new TokenDataSceneName(data, pos));
                         break;
 
                     case Section.DATA2:
                         byteCommand = data.RawArray.Skip(pos).Take(1700).ToArray();
-                        Tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1700));
+                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1700));
                         break;
 
                     case Section.STRINGS:
-                        Tokens.Add(new TokenDataString(data, pos));
+                        tokens.Add(new TokenDataString(data, pos));
                         break;
 
                     case Section.TITLE_NAME:
-                        Tokens.Add(new TokenDataTitleName(data, pos));
+                        tokens.Add(new TokenDataTitleName(data, pos));
                         break;
 
                     case Section.CHUNK:
                         byteCommand = data.RawArray.Skip(pos).Take(4).ToArray();
-                        Tokens.Add(new TokenDataChunk(data, byteCommand, pos, 4));
+                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 4));
                         break;
 
                     case Section.FOOTER:
                         byteCommand = data.RawArray.Skip(pos).Take(24).ToArray();
-                        Tokens.Add(new TokenDataChunk(data, byteCommand, pos, 24));
+                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 24));
                         break;
                 }
 
-                pos += Tokens.Last().Length;
+                pos += tokens.Last().Length;
                 currentSection = sectionTree.Query(pos).FirstOrDefault();
             }
 
             int trailerLenght = data.RawArray.Length - trailerStart;
             byteCommand = data.RawArray.Skip(trailerStart).Take(trailerLenght).ToArray();
             trailerToken = new Token(data, byteCommand, 0);
-            return Tokens;
+            return tokens;
         }
 
-        public override byte[] AssembleAsData()
+        public override byte[] AssembleAsData(List<Token> tokens)
         {
             int offsetTextSection = 0x2640;
             int pos = 0;
@@ -132,7 +132,7 @@ namespace Riven_Script_Editor
             byte[] fill = new Byte[offsetTextSection];
             stream.Write(fill, 0, fill.Length);
             
-            foreach(var token in Tokens)
+            foreach(var token in tokens)
             {
                 token.MessagePointerList.Sort();
                 foreach(MessagePointer messagePointer in token.MessagePointerList)
@@ -161,7 +161,7 @@ namespace Riven_Script_Editor
             return output;
         }
 
-        public override byte[] AssembleAsText(string title)
+        public override byte[] AssembleAsText(string title, List<Token> tokens)
         {
             Stream memoryStream = new MemoryStream();
             StreamWriter streamWrite = new StreamWriter(memoryStream, Encoding.GetEncoding(932));
@@ -169,7 +169,7 @@ namespace Riven_Script_Editor
             streamWrite.WriteLine("");
             streamWrite.WriteLine("");
 
-            foreach (var token in Tokens)
+            foreach (var token in tokens)
             {
                 if(token.GetMessages() != "")
                 {

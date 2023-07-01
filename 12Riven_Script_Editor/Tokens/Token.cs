@@ -70,8 +70,8 @@ namespace Riven_Script_Editor.Tokens
     public class Token : INotifyPropertyChanged
     {
         public const TokenType Type = 0;
-        private SolidColorBrush BrushForeground = new SolidColorBrush(Color.FromRgb(255,255,255));
-        private SolidColorBrush BrushBackground = new SolidColorBrush(Color.FromRgb(51, 51, 51));
+        private SolidColorBrush BrushForeground = new SolidColorBrush(Color.FromRgb(0,0,0));
+        private SolidColorBrush BrushBackground = new SolidColorBrush(Color.FromRgb(1, 1, 1));
         public List<MessagePointer> MessagePointerList = new List<MessagePointer>();
 
         public Token(DataWrapper dataWrapper, byte[] byteCommand, int offset)
@@ -80,7 +80,7 @@ namespace Riven_Script_Editor.Tokens
             _opCode = byteCommand[0];
             _length = Convert.ToInt32(byteCommand[1]);
             _command = ((TokenType)((int)_opCode)).ToString();
-            _offset = offset.ToString("X2");
+            _offset = offset;
             _dataWrapper = dataWrapper;
             Data = Utility.ToString(byteCommand);
         }
@@ -88,7 +88,7 @@ namespace Riven_Script_Editor.Tokens
 
         public Token(DataWrapper dataWrapper, int offset)
         {
-            _offset = offset.ToString("X2");
+            _offset = offset;
             _dataWrapper = dataWrapper;
         }
 
@@ -100,7 +100,7 @@ namespace Riven_Script_Editor.Tokens
             _opCode = ByteCommand[0];
             _length = Convert.ToInt32(ByteCommand[1]);
             _command = _opCode.ToString("X2");
-            _offset = "0x0";
+            _offset = 0;
             _dataWrapper = token._dataWrapper;
             Data = Utility.ToString(tempCommand);
         }
@@ -109,7 +109,7 @@ namespace Riven_Script_Editor.Tokens
 
         protected byte[] _byteCommand;
 
-        public byte[] ByteCommand
+        public virtual byte[] ByteCommand
         {
             get => _byteCommand;
             set
@@ -124,6 +124,16 @@ namespace Riven_Script_Editor.Tokens
             get => _opCode;
         }
 
+        protected string _splitable = "yes";
+        public string Splitable
+        {
+            get => _splitable;
+            set
+            {
+                _splitable = value;
+            }
+        }
+
         protected string _command;
         public string Command
         {
@@ -136,11 +146,22 @@ namespace Riven_Script_Editor.Tokens
             get => _description;
         }
 
-        protected string _offset;
-        public string Offset
+        protected int _offset;
+        public UInt16 Offset
         {
-            get => _offset;
+            get => (UInt16)_offset;
             set => _offset = value;
+        }
+
+        public int Size
+        {
+            get => ByteCommand.Length + GetMessagesBytes().Length;
+        }
+
+
+        public string OffsetHex
+        {
+            get => _offset.ToString("X2");
         }
 
         protected int _length;
@@ -188,11 +209,13 @@ namespace Riven_Script_Editor.Tokens
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected void OnPropertyChanged([CallerMemberName] string propertyName = null)
-            => PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        {
+           PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
-        public virtual string GetMessages() { return null; }
+        public virtual string GetMessages() { return ""; }
 
-        public virtual byte[] GetMessagesBytes() { return null; }
+        public virtual byte[] GetMessagesBytes() { return new byte[0]; }
 
         public virtual int SetMessagePointer(int offset) { return offset; }
 
@@ -202,6 +225,11 @@ namespace Riven_Script_Editor.Tokens
         {
             UpdateGui(window, true);
             AddTextbox(window, "Command", "Data");
+
+            var row1 = new RowDefinition();
+            row1.Height = new GridLength(24, GridUnitType.Pixel);
+            window.Grid.Height += 24;
+            window.Grid.RowDefinitions.Add(row1);
         }
 
         public virtual Token Clone()
@@ -225,7 +253,7 @@ namespace Riven_Script_Editor.Tokens
                 rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
                 window.Grid.Height -= 60;
             }
-                
+
 
             AddSpacer(window);
             if (!window.MenuViewLabel.IsChecked && !window.MenuViewDescription.IsChecked)
@@ -233,39 +261,6 @@ namespace Riven_Script_Editor.Tokens
                 rows[rows.Count - 1].Height = new GridLength(0, GridUnitType.Pixel);
                 window.Grid.Height -= 24;
             }
-
-            
-        }
-
-        protected void AddCombobox<T>(MainWindow window, string label, string var_name)
-        {
-            var x = window.Grid;
-            x.Height += 24;
-            var row = new RowDefinition();
-            row.Height = new GridLength(24, GridUnitType.Pixel);
-            x.RowDefinitions.Add(row);
-
-            TextBlock txtBlock1 = new TextBlock();
-            txtBlock1.Text = label;
-            txtBlock1.FontSize = 14;
-            txtBlock1.FontWeight = FontWeights.Bold;
-            Grid.SetRow(txtBlock1, x.RowDefinitions.Count-1);
-            Grid.SetColumn(txtBlock1, 0);
-            x.Children.Add(txtBlock1);
-
-            ComboBox cb = new ComboBox();
-            foreach (var e in Enum.GetValues(typeof(T)))
-                cb.Items.Add(e);
-
-            cb.SelectedItem = this.GetType().GetProperty(var_name).GetValue(this);
-            Grid.SetRow(cb, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(cb, 1);
-            cb.SelectionChanged += (sender, args) =>
-            {
-                this.GetType().GetProperty(var_name).SetValue(this, (T)args.AddedItems[0], null);
-                UpdateData();
-            };
-            x.Children.Add(cb);
         }
 
         protected void AddSpacer(MainWindow window)
@@ -374,222 +369,6 @@ namespace Riven_Script_Editor.Tokens
                 UpdateData();
             };
             x.Children.Add(tb);
-        }
-
-        protected void AddTranslationButton(MainWindow window, string label, string var_name, bool enabled = true)
-        {
-            var x = window.Grid;
-
-            var row1 = new RowDefinition();
-            row1.Height = new GridLength(24, GridUnitType.Pixel);
-            x.Height += 24;
-            x.RowDefinitions.Add(row1);
-
-            TextBlock txtBlock1 = new TextBlock();
-            txtBlock1.Text = label;
-            txtBlock1.FontSize = 14;
-            txtBlock1.FontWeight = FontWeights.Bold;
-            Grid.SetRow(txtBlock1, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(txtBlock1, 0);
-            x.Children.Add(txtBlock1);
-
-            Button button_google = new Button();
-            Grid.SetRow(button_google, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(button_google, 1);
-            button_google.Content = "Google TL";
-            x.Children.Add(button_google);
-
-            var row3 = new RowDefinition();
-            row3.Height = new GridLength(24, GridUnitType.Pixel);
-            x.Height += 24;
-            x.RowDefinitions.Add(row3);
-
-            Button button_bing = new Button();
-            Grid.SetRow(button_bing, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(button_bing, 1);
-            button_bing.Content = "Bing TL";
-            x.Children.Add(button_bing);
-
-            var row4 = new RowDefinition();
-            row4.Height = new GridLength(24, GridUnitType.Pixel);
-            x.Height += 24;
-            x.RowDefinitions.Add(row4);
-
-            Button button_deepl = new Button();
-            Grid.SetRow(button_deepl, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(button_deepl, 1);
-            button_deepl.Content = "DeepL TL";
-            x.Children.Add(button_deepl);
-
-
-            var row2 = new RowDefinition();
-            row2.Height = new GridLength(120, GridUnitType.Pixel);
-            x.Height += 120;
-            x.RowDefinitions.Add(row2);
-
-            TextBox tb = new TextBox();
-            // disable drag and drop
-            DataObject.AddCopyingHandler(tb, (sender, e) => { if (e.IsDragDrop) e.CancelCommand(); });
-            Grid.SetRow(tb, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(tb, 1);
-            tb.TextWrapping = TextWrapping.Wrap;
-            tb.VerticalScrollBarVisibility = ScrollBarVisibility.Auto;
-            tb.IsReadOnly = !enabled;
-            x.Children.Add(tb);
-
-
-            button_google.Click += (sender, args) =>
-            {
-                string input = (string)this.GetType().GetProperty(var_name).GetValue(this);
-
-                string url = String.Format("https://translate.googleapis.com/translate_a/single?client=gtx&sl={0}&tl={1}&dt=t&q={2}", "ja", "en", Uri.EscapeUriString(input));
-                WebClient webClient = new WebClient();
-                webClient.Encoding = System.Text.Encoding.UTF8;
-                webClient.Headers.Add("user-agent", "Mozilla/4.0 (compatible; MSIE 6.0; " +
-                                  "Windows NT 5.2; .NET CLR 1.0.3705;)");
-                string result = webClient.DownloadString(url);
-
-                // Get all json data
-                var jsonData = new JavaScriptSerializer().Deserialize<List<dynamic>>(result);
-                var translationItems = jsonData[0];
-                string translation = "";
-
-                // Loop through the collection extracting the translated objects
-                foreach (object item in translationItems)
-                {
-                    IEnumerable translationLineObject = item as IEnumerable;
-                    IEnumerator translationLineString = translationLineObject.GetEnumerator();
-                    translationLineString.MoveNext();
-                    translation += string.Format(" {0}", Convert.ToString(translationLineString.Current));
-                }
-
-                // Remove first blank character
-                if (translation.Length > 1) { translation = translation.Substring(1); };
-
-                // Return translation
-                tb.Text = translation;
-            };
-
-            button_bing.Click += (sender, args) =>
-            {
-                string input = (string)this.GetType().GetProperty(var_name).GetValue(this);
-
-                string url = "https://www.bing.com/ttranslatev3?isVertical=1&&IG=89A617AD83C84B9383CD52F1D13A4EB6&IID=translator.5026.3";
-                WebClient webClient = new WebClient();
-                webClient.Encoding = System.Text.Encoding.UTF8;
-                webClient.Headers[HttpRequestHeader.ContentType] = "application/x-www-form-urlencoded";
-                string myParameters = String.Format("&fromLang={0}&to={1}&text={2}", "ja", "en", Uri.EscapeUriString(input));
-                string result = webClient.UploadString(url, myParameters);
-
-                // Get all json data
-                var jsonData = new JavaScriptSerializer().Deserialize<List<dynamic>>(result);
-                var translation = jsonData[0]["translations"][0]["text"];
-
-                tb.Text = translation;
-            };
-
-            button_deepl.Click += (sender, args) =>
-            {
-                string input = (string)this.GetType().GetProperty(var_name).GetValue(this);
-
-                string url = "https://www2.deepl.com/jsonrpc";
-
-                var httpWebRequest = (HttpWebRequest)WebRequest.Create(url);
-                httpWebRequest.ContentType = "application/json";
-                httpWebRequest.Method = "POST";
-
-                using (var streamWriter = new StreamWriter(httpWebRequest.GetRequestStream()))
-                {
-                    string json =
-                        "{ \"jsonrpc\":\"2.0\"," +
-                        "\"method\": \"LMT_handle_jobs\"," +
-                        "\"params\":{ " +
-                            "\"jobs\":[" +
-                                "{ \"kind\":\"default\"," +
-                                "\"raw_en_sentence\":\"" + input + "\"," +
-                                "\"raw_en_context_before\":[]," +
-                                "\"raw_en_context_after\":[]," +
-                                "\"preferred_num_beams\":4}" +
-                                "]," +
-                            "\"lang\":{" +
-                                "\"user_preferred_langs\":[\"EN\",\"DE\",\"JA\"]," +
-                                "\"source_lang_user_selected\":\"JA\"," +
-                                "\"target_lang\":\"EN\"" +
-                                "}," +
-                            "\"priority\":1," +
-                            "\"commonJobParams\":{}," +
-                            "\"timestamp\": " + (new DateTimeOffset(DateTime.UtcNow).ToUnixTimeMilliseconds()).ToString() +
-                        "}," +
-                        "\"id\":98910006" +
-                        "}";
-
-                    streamWriter.Write(json);
-                }
-
-                string result;
-                var httpResponse = (HttpWebResponse)httpWebRequest.GetResponse();
-                using (var streamReader = new StreamReader(httpResponse.GetResponseStream()))
-                {
-                    result = streamReader.ReadToEnd();
-                }
-                //string result = "{\"id\":98910006,\"jsonrpc\":\"2.0\",\"result\":{\"date\":\"20200510\",\"source_lang\":\"JA\",\"source_lang_is_confident\":1,\"target_lang\":\"EN\",\"timestamp\":1589154589,\"translations\":[{\"beams\":[{\"num_symbols\":18,\"postprocessed_sentence\":\"Where is this place, did Yuni survive, and who is this woman?\",\"score\":-4991.57,\"totalLogProb\":16.3437},{\"num_symbols\":18,\"postprocessed_sentence\":\"Where is this place, did Yuni survive, and who was this woman?\",\"score\":-4991.58,\"totalLogProb\":16.3246},{\"num_symbols\":18,\"postprocessed_sentence\":\"Where is this place, did Yuni survive, and who was that woman?\",\"score\":-4991.77,\"totalLogProb\":15.9421},{\"num_symbols\":19,\"postprocessed_sentence\":\"Where is this place, did Yuni survive, and who was this woman really?\",\"score\":-4992.6,\"totalLogProb\":14.3136}],\"quality\":\"normal\"}]}}\r\n";
-
-                // Process JSON result
-                result = result.Replace("\n", "").Replace("\r", "");
-                var jsonData = new JavaScriptSerializer().Deserialize<dynamic>(result);
-                var v = jsonData["result"];
-
-                var final = "";
-                foreach (var beam in jsonData["result"]["translations"][0]["beams"])
-                {
-                    if (final != "")
-                        final += "\n\n";
-                    final += beam["postprocessed_sentence"];
-                }
-
-                tb.Text = final;
-            };
-        }
-
-
-
-        protected void AddUint8(MainWindow window, string label, string var_name, object obj=null)
-        {
-            if (obj == null)
-                obj = this;
-
-            var x = window.Grid;
-            x.Height += 24;
-            var row = new RowDefinition();
-            row.Height = new GridLength(24, GridUnitType.Pixel);
-            x.RowDefinitions.Add(row);
-
-            TextBlock txtBlock1 = new TextBlock();
-            txtBlock1.Text = label;
-            txtBlock1.FontSize = 14;
-            txtBlock1.FontWeight = FontWeights.Bold;
-            Grid.SetRow(txtBlock1, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(txtBlock1, 0);
-            x.Children.Add(txtBlock1);
-
-            ByteUpDown ud = new ByteUpDown();
-            // disable drag and drop
-            DataObject.AddCopyingHandler(ud, (sender, e) => { if (e.IsDragDrop) e.CancelCommand(); });
-            var style = Application.Current.Resources[typeof(Button)];
-            ud.Background = BrushBackground;
-            ud.Foreground = BrushForeground;
-            Grid.SetRow(ud, x.RowDefinitions.Count - 1);
-            Grid.SetColumn(ud, 1);
-            ud.Width = 60;
-            ud.HorizontalAlignment = HorizontalAlignment.Left;
-            ud.Value = (byte)obj.GetType().GetProperty(var_name).GetValue(obj);
-            ud.ValueChanged += (sender, args) =>
-            {
-                window.ChangedFile = true;
-                obj.GetType().GetProperty(var_name).SetValue(obj, (byte)args.NewValue, null);
-                UpdateData();
-            };
-            x.Children.Add(ud);
         }
 
         protected void AddUint16(MainWindow window, string label, string var_name, object obj = null)

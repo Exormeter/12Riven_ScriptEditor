@@ -10,7 +10,7 @@ namespace Riven_Script_Editor.Tokens
         public TokenHeader(DataWrapper wrapper, byte[] byteCommand, int pos) : base(wrapper, byteCommand, pos)
         {
             _command = "Header";
-            
+            Splitable = "No";
 
             _length = byteCommand[0];
         }

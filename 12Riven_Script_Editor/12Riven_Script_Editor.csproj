@@ -93,6 +93,7 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="ScriptListFileManager.cs" />
     <Compile Include="Tokenizer\DataTokenizer.cs" />
     <Compile Include="FileTypes\AFS.cs" />
     <Compile Include="ExceptionPopup.cs">
@@ -107,6 +108,7 @@
     <Compile Include="Themes\DarkBlend\TreeViewItemExtensions.cs" />
     <Compile Include="Tokenizer\DataWrapper.cs" />
     <Compile Include="Tokenizer\ATokenizer.cs" />
+    <Compile Include="Tokens\TokenExtGoto.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataRoute2.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataChunk.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataTitleName.cs" />
@@ -114,6 +116,7 @@
     <Compile Include="Tokens\DataBinToken\TokenDataRoute.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataSceneName.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataName.cs" />
+    <Compile Include="Tokens\TokenJump.cs" />
     <Compile Include="Tokens\Token.cs" />
     <Compile Include="Tokens\TokenHeader.cs" />
     <Compile Include="Tokenizer\ScriptTokenizer.cs" />
