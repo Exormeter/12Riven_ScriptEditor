@@ -8,6 +8,8 @@ namespace Riven_Script_Editor
 {
     static class Utility
     {
+        //static readonly string encoding = "Shift-JIS";
+        static readonly string encoding = "Big5";
         public static string StringSingleSpace(string input)
         {
             return input.Replace("  ", " ");
@@ -23,7 +25,7 @@ namespace Riven_Script_Editor
             string temp = input.Replace("ï", "∇");
             temp = temp.Replace("é", "≡");
             temp = temp.Replace("ö", "≒");
-            var x = Encoding.GetEncoding("Shift-JIS").GetBytes(temp);
+            var x = Encoding.GetEncoding(encoding).GetBytes(temp);
 
             for (int i = 0; i < x.Length - 1; i++)
                 if (x[i] >= 0x80)
@@ -83,7 +85,7 @@ namespace Riven_Script_Editor
                     //    { x[i-1] = 0x81; x[i] = 0x7A; }
                 }
 
-            var output = Encoding.GetEncoding("Shift-JIS").GetString(x);
+            var output = Encoding.GetEncoding(encoding).GetString(x);
             output = output.Replace("∇", "ï");
             output = output.Replace("≡", "é");
             output = output.Replace("≒", "ö");

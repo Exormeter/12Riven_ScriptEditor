@@ -557,32 +557,32 @@ namespace Riven_Script_Editor
 
             if (tokenList[TokenListView.SelectedIndex].OpCode == 0x0B)
             {
-                //MenuItem menuItemJoin = new MenuItem();
-                //menuItemJoin.Header = "Join Scripts";
-                //menuItemJoin.Click += new RoutedEventHandler(JoinTokens_MouseUp);
-                //contextMenu.Items.Add(menuItemJoin);
-
-                MenuItem menuItemDelete = new MenuItem();
-                menuItemDelete.Header = "Delete Breakout Script";
-                menuItemDelete.Click += new RoutedEventHandler(DeleteTokens_MouseUp);
-                contextMenu.Items.Add(menuItemDelete);
+                MenuItem menuItemJoin = new MenuItem();
+                menuItemJoin.Header = "Join Scripts";
+                menuItemJoin.Click += new RoutedEventHandler(JoinTokens_MouseUp);
+                contextMenu.Items.Add(menuItemJoin);
             }
 
             TokenListView.ContextMenu = contextMenu;
         }
 
-        //private void JoinTokens_MouseUp(Object sender, System.EventArgs e)
-        //{
-        //    TokenExtGoto token = (TokenExtGoto)tokenList[TokenListView.SelectedIndex];
-        //    FixExGotoIndexes(scriptListFileManager.getFilenameIndex(token.referencedFilename));
-        //    scriptListFileManager.RemoveFilename(token.referencedFilename);
-        //    byte[] binData = File.ReadAllBytes(System.IO.Path.Combine(folder, token.referencedFilename));
-        //    ScriptTokenizer scriptTokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
-        //    var breakoutTokenList = scriptTokenizer.ParseData();
-        //    breakoutTokenList.RemoveAt(0); //remove header
-        //    tokenList.RemoveRange(TokenListView.SelectedIndex, tokenList.Count() - TokenListView.SelectedIndex);
-        //    tokenList.AddRange(breakoutTokenList);
-        //}
+        private void JoinTokens_MouseUp(Object sender, System.EventArgs e)
+        {
+            TokenExtGoto token = (TokenExtGoto)tokenList[TokenListView.SelectedIndex];
+            FixExGotoIndexes(scriptListFileManager.getFilenameIndex(token.referencedFilename));
+            byte[] binData = File.ReadAllBytes(System.IO.Path.Combine(folder, token.referencedFilename));
+            scriptListFileManager.RemoveFilename(token.referencedFilename);
+            ScriptTokenizer scriptTokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
+            var breakoutTokenList = scriptTokenizer.ParseData();
+            breakoutTokenList.RemoveAt(0); //remove header
+            tokenList.RemoveAt(tokenList.Count - 1); //remove trailer
+            tokenList.RemoveAt(tokenList.Count - 2); //remove end script opcode
+            tokenList.RemoveAt(tokenList.Count - 3); //remove goto opcode
+            tokenList.AddRange(breakoutTokenList);
+            SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
+            DataContext = new CommandViewBox(tokenList);
+            ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
+        }
 
         private void ScriptSplitContextMenu_MouseUp(Object sender, System.EventArgs e) {
             string breakoutScriptName = (string)listviewFiles.SelectedItem;
@@ -594,20 +594,11 @@ namespace Riven_Script_Editor
             var commandBytes = new byte[] {0x0B, 0x06, scriptIndex, 0x00 , 0x00, 0x00};
             var callExtToken = new TokenExtGoto(null, commandBytes, 0, breakoutScriptName);
             tokenList.Insert(TokenListView.SelectedIndex + 1, callExtToken);
+            tokenList.RemoveRange(TokenListView.SelectedIndex + 2, tokenList.Count() - TokenListView.SelectedIndex - 4);
             DataContext = new CommandViewBox(tokenList);
             ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
             SaveFile(breakoutScriptName, Tokenizer.AssembleAsData(breakoutTokenList));
             SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
-        }
-
-        private void DeleteTokens_MouseUp(Object sender, System.EventArgs e)
-        {
-            TokenExtGoto token = (TokenExtGoto)tokenList[TokenListView.SelectedIndex];
-            FixExGotoIndexes(scriptListFileManager.getFilenameIndex(token.referencedFilename));
-            scriptListFileManager.RemoveFilename(token.referencedFilename);
-            tokenList.RemoveAt(TokenListView.SelectedIndex);
-            SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
-            DataContext = new CommandViewBox(tokenList);
         }
 
         private void FixExGotoIndexes(int removedIndex)

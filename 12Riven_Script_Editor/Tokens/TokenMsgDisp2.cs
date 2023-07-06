@@ -135,7 +135,6 @@ namespace Riven_Script_Editor.Tokens
             base.AddRichTextbox(window, "Message", "Message");
             base.AddTextbox(window, "Terminator", "MessageEnding");
             base.AddRichTextbox(window, "Complete Text", "CompleteMessage", false);
-            //base.AddTranslationButton(window, "Translation", "MessageJp");
 
             base.AddSpacer(window);
         }

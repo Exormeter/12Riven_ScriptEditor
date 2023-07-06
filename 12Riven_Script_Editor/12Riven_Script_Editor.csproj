@@ -108,6 +108,7 @@
     <Compile Include="Themes\DarkBlend\TreeViewItemExtensions.cs" />
     <Compile Include="Tokenizer\DataWrapper.cs" />
     <Compile Include="Tokenizer\ATokenizer.cs" />
+    <Compile Include="Tokens\TokenMovieStart.cs" />
     <Compile Include="Tokens\TokenExtGoto.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataRoute2.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataChunk.cs" />

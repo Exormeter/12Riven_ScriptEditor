@@ -195,6 +195,7 @@ namespace Riven_Script_Editor.Tokens
                 case TokenSelectDisp2.Type: return new TokenSelectDisp2(data, byteCommand, pos);
                 case TokenSysMessage.Type: return new TokenSysMessage(data, byteCommand, pos);
                 case TokenJump.Type: return new TokenJump(data, byteCommand, pos, null);
+                case TokenMovieStart.Type: return new TokenMovieStart(data, byteCommand, pos);
                 default: return new Token(data, byteCommand, pos);
             }
         }
