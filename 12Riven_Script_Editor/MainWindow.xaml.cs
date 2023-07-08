@@ -576,8 +576,8 @@ namespace Riven_Script_Editor
             var breakoutTokenList = scriptTokenizer.ParseData();
             breakoutTokenList.RemoveAt(0); //remove header
             tokenList.RemoveAt(tokenList.Count - 1); //remove trailer
-            tokenList.RemoveAt(tokenList.Count - 2); //remove end script opcode
-            tokenList.RemoveAt(tokenList.Count - 3); //remove goto opcode
+            tokenList.RemoveAt(tokenList.Count - 1); //remove end script opcode
+            tokenList.RemoveAt(tokenList.Count - 1); //remove goto opcode
             tokenList.AddRange(breakoutTokenList);
             SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
             DataContext = new CommandViewBox(tokenList);
