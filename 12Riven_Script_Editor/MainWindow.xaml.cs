@@ -551,7 +551,7 @@ namespace Riven_Script_Editor
             MenuItem menuItemSplit = new MenuItem();
             menuItemSplit.Header = "Split Script Here";
             string scriptName = (string)listviewFiles.SelectedItem;
-            menuItemSplit.IsEnabled = !scriptName.Contains(splittedFilenameEnding);
+            menuItemSplit.IsEnabled = !scriptName.Contains(splittedFilenameEnding) && (tokenList[TokenListView.SelectedIndex].Splitable != "No");
             menuItemSplit.Click += new RoutedEventHandler(ScriptSplitContextMenu_MouseUp);
             contextMenu.Items.Add(menuItemSplit);
 
