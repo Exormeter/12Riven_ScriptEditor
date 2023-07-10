@@ -107,7 +107,7 @@ namespace Riven_Script_Editor
             MessageBox.Show(e.ExceptionObject.ToString());
         }
 
-        private bool CheckUnsavedChanges()
+        private bool CheckUnsavedChanges() 
         {
             // Check for file changes, then prompt user to save
             if (ChangedFile)
@@ -116,11 +116,8 @@ namespace Riven_Script_Editor
 
                 if (dialogResult == MessageBoxResult.Yes)
                 {
-                    string outPath = System.IO.Path.Combine(folder, filename);
                     byte[] output = Tokenizer.AssembleAsData(tokenList);
-                    var stream_out = new FileStream(outPath, FileMode.Create, FileAccess.ReadWrite);
-                    stream_out.Write(output, 0, output.Length);
-                    stream_out.Close();
+                    if (!SaveFile((string)listviewFiles.SelectedItem, output)) return false;
                 }
                 else if (dialogResult == MessageBoxResult.Cancel)
                     return false;
@@ -169,11 +166,6 @@ namespace Riven_Script_Editor
         private void LoadScriptList(string filepath)
         {
             scriptListFileManager.Load(filepath);
-        }
-
-        private void SplitScriptAtIndex(object sender, RoutedEventArgs e)
-        {
-
         }
 
         private void BrowseFilelist(object sender, RoutedEventArgs e) {
@@ -444,14 +436,19 @@ namespace Riven_Script_Editor
             string fileName;
             try
             {
-                fileName = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
+                fileName = (string)listviewFiles.SelectedItem;
             } catch { return;  }
             byte[] output = Tokenizer.AssembleAsData(tokenList.ToList());
             SaveFile(fileName, output);
         }
 
-        private void SaveFile(string fileName, byte[] data)
+        private bool SaveFile(string fileName, byte[] data)
         {
+            if (data.Length > 0xFFFF)
+            {
+                MessageBox.Show("Please split the script before saving it", "Script length exceeded");
+                return false;
+            }
             try
             {
                 string outPath = System.IO.Path.Combine(folder, fileName);
@@ -463,7 +460,10 @@ namespace Riven_Script_Editor
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
+                return false;
             }
+            return true;
+
         }
 
         private void Menu_Export_Mac(object sender, RoutedEventArgs e)
