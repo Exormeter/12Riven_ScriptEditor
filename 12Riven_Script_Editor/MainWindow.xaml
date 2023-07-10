@@ -12,8 +12,8 @@
         <Border DockPanel.Dock="Top" BorderBrush="{StaticResource NormalBorderBrush}" BorderThickness="0,0,0,1">
             <Menu>
                 <MenuItem Header="_File">
-                    <MenuItem Header="Save current file (Ctrl+S)" Click="Menu_File_Save"/>
-                    <MenuItem Header="Export SCENE00.afs (Ctrl+E)" Click="Menu_Export_Mac"/>
+                    <MenuItem Header="Save current script file" Click="Menu_File_Save"/>
+                    <MenuItem Header="Export SCENE00.afs" Click="Menu_Export_Mac"/>
                     <MenuItem Header="Export file as TXT" Click="Menu_Export_Txt"/>
                 </MenuItem>
                 <MenuItem Header="View">

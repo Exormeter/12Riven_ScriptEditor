@@ -117,12 +117,10 @@ namespace Riven_Script_Editor
                 if (dialogResult == MessageBoxResult.Yes)
                 {
                     byte[] output = Tokenizer.AssembleAsData(tokenList);
-                    if (!SaveFile((string)listviewFiles.SelectedItem, output)) return false;
+                    if (!SaveFile(filename, output)) return false;
                 }
                 else if (dialogResult == MessageBoxResult.Cancel)
                     return false;
-
-                ChangedFile = false;
             }
             return true;
         }
@@ -433,13 +431,10 @@ namespace Riven_Script_Editor
         
         private void Menu_File_Save(object sender, RoutedEventArgs e)
         {
-            string fileName;
-            try
-            {
-                fileName = (string)listviewFiles.SelectedItem;
-            } catch { return;  }
+            if (filename == "") return;
+
             byte[] output = Tokenizer.AssembleAsData(tokenList.ToList());
-            SaveFile(fileName, output);
+            SaveFile(filename, output);
         }
 
         private bool SaveFile(string fileName, byte[] data)
@@ -462,6 +457,7 @@ namespace Riven_Script_Editor
                 MessageBox.Show(ex.Message);
                 return false;
             }
+            ChangedFile = false;
             return true;
 
         }
