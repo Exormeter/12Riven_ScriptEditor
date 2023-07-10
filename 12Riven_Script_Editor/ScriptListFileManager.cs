@@ -40,7 +40,6 @@ namespace Riven_Script_Editor
             int index = _completeFilenameList.IndexOf(filename);
             _displayedScriptNameFiles.Remove(filename);
             _completeFilenameList.Remove(filename);
-            File.Delete(listFilePath + filename);
             SaveFilenameList();
             return index;
         }

@@ -578,6 +578,7 @@ namespace Riven_Script_Editor
             SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
             DataContext = new CommandViewBox(tokenList);
             ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
+            File.Delete(folder + "\\" + token.referencedFilename);
         }
 
         private void ScriptSplitContextMenu_MouseUp(Object sender, System.EventArgs e) {
