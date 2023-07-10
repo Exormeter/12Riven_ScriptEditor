@@ -103,7 +103,7 @@ roll the change back if needed. This is the reason why it can not be automated a
 
 1. Right click the token called "ext_Goto"
 
-![AE Tools](pictures/goto_token.png)
+![AE Tools](pictures/join_script.png)
 
 2. Click "Join scripts"
 
