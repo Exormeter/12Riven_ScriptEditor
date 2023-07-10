@@ -64,4 +64,49 @@ For a translation you only need to be concerned about the "Msg Disp2" commands.
 
 5. Start the game, the game should now display the edits you made
 
+# Splitting Scripts
+
+There might be time where a script with a translation will be bigger than the script file limit of 64Kb. This 
+limit is posed by the 12Riven engine and is not a shortcomming of this editor.
+
+The 0.2 version of the 12Riven Script Editor tries to circumvent this limitation by allowing users to split the script
+on certain placed, effectivly doubling the size to 128Kb per script. While this is a theoretically number, it should
+allow any edits that where to big for one script.
+
+Splitting a script is experimental and it is not possible for now to split a script a scound time or split the script that
+contains the continuation of the original script.
+Form my testing, it should not break the game, but since the scope is so large, I can not gurarrantie that any split will work.
+If the game crashes on a split, please open an issue with where you split the script. Also, use this feature sparingly 
+and only if nesccessary.
+
+## Wht is splitting not automatic?
+
+There are about 7000 token in a script and I have only tested a handful of location if a split is possible there.
+This means that there are locations where a split wouldn't work. So the user can experiment with different location and
+roll the change back if needed. This is the reason why it can not be automated at this time.
+
+## How to split a script
+
+1. Right click a token that is marked as splittable.
+
+![AE Tools](pictures/split_here.png)
+
+2. Click "Split here"
+
+3. The editor will generate a new script and will reference it with a goto token
+
+![AE Tools](pictures/goto_token.png)
+
+4. The other part of the script is now in a serparte script called "*_continued.bin"
+
+## Joining script back together
+
+1. Right click the token called "ext_Goto"
+
+![AE Tools](pictures/goto_token.png)
+
+2. Click "Join scripts"
+
+3. The script are not back in one piece and a different split location can be choosen
+
 
