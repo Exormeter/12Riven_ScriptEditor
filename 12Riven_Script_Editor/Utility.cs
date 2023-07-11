@@ -8,8 +8,8 @@ namespace Riven_Script_Editor
 {
     static class Utility
     {
-        //static readonly string encoding = "Shift-JIS";
-        static readonly string encoding = "Big5";
+        static readonly string encoding = "Shift-JIS";
+        //static readonly string encoding = "Big5";
         public static string StringSingleSpace(string input)
         {
             return input.Replace("  ", " ");
