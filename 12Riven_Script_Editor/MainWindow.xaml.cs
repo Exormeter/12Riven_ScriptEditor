@@ -487,15 +487,9 @@ namespace Riven_Script_Editor
             string fileName;
             try
             {
-                fileName = (string)(listviewFiles.SelectedItem as ListViewItem).Content;
-            }
-            catch { return; }
-
-
-            try
-            {
-                byte[] output = Tokenizer.AssembleAsText((string)(listviewFiles.SelectedItem as ListViewItem).Content, tokenList.ToList());
-                SaveFile(fileName, output);
+                fileName = (string)listviewFiles.SelectedItem;
+                byte[] output = Tokenizer.AssembleAsText(fileName, tokenList.ToList());
+                SaveFile(fileName + ".txt", output);
             }
             catch (Exception ex)
             {
