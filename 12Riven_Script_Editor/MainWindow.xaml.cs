@@ -64,6 +64,7 @@ namespace Riven_Script_Editor
             this.Closing += MainWindow_Closing;
 
             textbox_inputFolder.Text = GetConfig("input_folder");
+            textbox_inputFolderJp.Text = GetConfig("input_folder_jp");
             textbox_listFile.Text = GetConfig("list_file");
             textbox_exportedAfs.Text = GetConfig("exported_afs");
             checkbox_SearchCaseSensitive.IsChecked = GetConfig("case_sensitive") == "1";
@@ -77,6 +78,7 @@ namespace Riven_Script_Editor
             MenuViewLabel.IsChecked = GetConfig("view_label", "1") == "1";
 
             textbox_inputFolder.TextChanged += (sender, ev) => { UpdateConfig("input_folder", textbox_inputFolder.Text); BrowseInputFolder(null, null); };
+            textbox_inputFolderJp.TextChanged += (sender, ev) => UpdateConfig("input_folder_jp", textbox_inputFolderJp.Text);
             textbox_listFile.TextChanged += (sender, ev) => { UpdateConfig("list_file", textbox_listFile.Text); LoadScriptList(textbox_listFile.Text); };
             textbox_exportedAfs.TextChanged += (sender, ev) => UpdateConfig("exported_afs", textbox_exportedAfs.Text);
             checkbox_SearchCaseSensitive.Checked += (sender, ev) => UpdateConfig("case_sensitive", "1");
@@ -159,6 +161,14 @@ namespace Riven_Script_Editor
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 textbox_inputFolder.Text = dialog.FileName;
+        }
+
+        private void BrowseInputFolderJp(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                textbox_inputFolderJp.Text = dialog.FileName;
         }
 
         private void LoadScriptList(string filepath)
@@ -517,10 +527,11 @@ namespace Riven_Script_Editor
 
             filename = (string)args.AddedItems[0]; 
             string path_en = System.IO.Path.Combine(folder, filename);
-
-            
+                
             byte[] binData = File.ReadAllBytes(path_en);
-            if(filename.Equals("DATA.BIN"))
+    
+
+            if (filename.Equals("DATA.BIN"))
             {
                 Tokenizer = new DataTokenizer(new DataWrapper(binData));
             }
@@ -529,6 +540,33 @@ namespace Riven_Script_Editor
                 Tokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
             }
             tokenList = Tokenizer.ParseData();
+
+            string path_jp = System.IO.Path.Combine(textbox_inputFolderJp.Text, filename);
+            if (File.Exists(path_jp))
+            {
+                byte[] binDataJp = File.ReadAllBytes(path_jp);
+                ATokenizer TokenizerJp;
+
+                if (filename.Equals("DATA.BIN"))
+                {
+                    TokenizerJp = new DataTokenizer(new DataWrapper(binDataJp));
+                }
+                else
+                {
+                    TokenizerJp = new ScriptTokenizer(new DataWrapper(binDataJp), scriptListFileManager);
+                }
+                List<Token> tokenListJp = TokenizerJp.ParseData();
+
+                
+                for (int i=0; i < tokenList.Count; i++)
+                {
+                    // quick hack. just assumes indexes are the same. needs to change if we add line-adding functionality. -chroi
+                    Token token = tokenList[i];
+                    if (token is TokenMsgDisp2 tokenMsgDisp2)
+                        tokenMsgDisp2.MessageJp = ((TokenMsgDisp2)tokenListJp[i]).Message;
+                }
+            }
+
             ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
             ((MainWindow)Application.Current.MainWindow).Title = "12R Script: " + filename;
             DataContext = new CommandViewBox(tokenList.ToList());
