@@ -257,7 +257,7 @@ namespace Riven_Script_Editor
             if (idx == -1)
                 idx = 0;
 
-            text = Utility.StringDoubleSpace(text);
+            //text = Utility.StringDoubleSpace(text);
             if (!case_sensitive)
                 text = text.ToLower();
 
@@ -366,7 +366,7 @@ namespace Riven_Script_Editor
             if (idx == -1)
                 idx = 0;
 
-            text = Utility.StringDoubleSpace(text);
+            //text = Utility.StringDoubleSpace(text);
             if (!case_sensitive)
                 text = text.ToLower();
 
