@@ -13,8 +13,13 @@
             <Menu>
                 <MenuItem Header="_File">
                     <MenuItem Header="Save current script file" Click="Menu_File_Save"/>
+                    <Separator />
                     <MenuItem Header="Export SCENE00.afs" Click="Menu_Export_Mac"/>
                     <MenuItem Header="Export file as TXT" Click="Menu_Export_Txt"/>
+                    <Separator />
+                    <MenuItem Header="Import CSV to current file..." Click="Menu_Import_Csv"/>
+                    <Separator />
+                    <MenuItem Header="Exit" Click="Menu_Exit" />
                 </MenuItem>
                 <MenuItem Header="View">
                     <MenuItem Header="Folders" Name="MenuViewFolder" Click="MenuViewFolders_Clicked"/>
