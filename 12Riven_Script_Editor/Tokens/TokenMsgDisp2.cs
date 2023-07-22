@@ -93,7 +93,7 @@ namespace Riven_Script_Editor.Tokens
                 Message = CompleteMessage;
 
             // Remove double spaces
-            Message = Utility.StringSingleSpace(Message);
+            // Message = Utility.StringSingleSpace(Message);
 
             UpdateData();
         }
@@ -115,7 +115,7 @@ namespace Riven_Script_Editor.Tokens
 
         public override void UpdateData()
         {
-            string message_spacing = Utility.StringDoubleSpace(Message);
+            string message_spacing = Message; // Utility.StringDoubleSpace(Message);
 
             if (Speaker.Length > 0)
                 CompleteMessage = Speaker + "「" + message_spacing + "」" + MessageEnding;
