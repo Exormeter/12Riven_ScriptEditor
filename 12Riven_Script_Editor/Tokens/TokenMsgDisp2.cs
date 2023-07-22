@@ -20,6 +20,8 @@ namespace Riven_Script_Editor.Tokens
         public string Message { get; set; }
         public string MessageEnding { get; set; }
 
+        public string MessageJp { get; set; }
+
         static Regex terminator_regex = new Regex(@"(%[%ABCDEKNPpSTV0-9]*?)$");
 
         public TokenMsgDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank = false) : base(wrapper, byteCommand, pos)
@@ -132,7 +134,8 @@ namespace Riven_Script_Editor.Tokens
         {
             base.UpdateGui(window);
             base.AddTextbox(window, "Speaker", "Speaker");
-            base.AddRichTextbox(window, "Message", "Message");
+            base.AddRichTextbox(window, "Text (EN)", "Message");
+            base.AddRichTextbox(window, "Text (JP)", "MessageJp");
             base.AddTextbox(window, "Terminator", "MessageEnding");
             base.AddRichTextbox(window, "Complete Text", "CompleteMessage", false);
 

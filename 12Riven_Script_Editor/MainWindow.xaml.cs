@@ -23,6 +23,7 @@ using Riven_Script_Editor.Tokens;
 using Riven_Script_Editor.FileTypes;
 using System.Configuration;
 using System.Text.RegularExpressions;
+using Csv;
 
 namespace Riven_Script_Editor
 {
@@ -64,6 +65,7 @@ namespace Riven_Script_Editor
             this.Closing += MainWindow_Closing;
 
             textbox_inputFolder.Text = GetConfig("input_folder");
+            textbox_inputFolderJp.Text = GetConfig("input_folder_jp");
             textbox_listFile.Text = GetConfig("list_file");
             textbox_exportedAfs.Text = GetConfig("exported_afs");
             checkbox_SearchCaseSensitive.IsChecked = GetConfig("case_sensitive") == "1";
@@ -77,6 +79,7 @@ namespace Riven_Script_Editor
             MenuViewLabel.IsChecked = GetConfig("view_label", "1") == "1";
 
             textbox_inputFolder.TextChanged += (sender, ev) => { UpdateConfig("input_folder", textbox_inputFolder.Text); BrowseInputFolder(null, null); };
+            textbox_inputFolderJp.TextChanged += (sender, ev) => UpdateConfig("input_folder_jp", textbox_inputFolderJp.Text);
             textbox_listFile.TextChanged += (sender, ev) => { UpdateConfig("list_file", textbox_listFile.Text); LoadScriptList(textbox_listFile.Text); };
             textbox_exportedAfs.TextChanged += (sender, ev) => UpdateConfig("exported_afs", textbox_exportedAfs.Text);
             checkbox_SearchCaseSensitive.Checked += (sender, ev) => UpdateConfig("case_sensitive", "1");
@@ -159,6 +162,14 @@ namespace Riven_Script_Editor
             dialog.IsFolderPicker = true;
             if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
                 textbox_inputFolder.Text = dialog.FileName;
+        }
+
+        private void BrowseInputFolderJp(object sender, RoutedEventArgs e)
+        {
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog();
+            dialog.IsFolderPicker = true;
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+                textbox_inputFolderJp.Text = dialog.FileName;
         }
 
         private void LoadScriptList(string filepath)
@@ -464,20 +475,29 @@ namespace Riven_Script_Editor
 
         private void Menu_Export_Mac(object sender, RoutedEventArgs e)
         {
-            if (textbox_exportedAfs.Text == "")
+            if (textbox_exportedAfs.Text == "") 
+            {
+                MessageBox.Show("Please select an AFS path.", "No AFS path selected");
                 return;
+            }
 
-            var stream = new FileStream(textbox_exportedAfs.Text, FileMode.Create, FileAccess.Write);
+            if (textbox_exportedAfs.Text == "")
+            {
+                MessageBox.Show("Please select an AFS path.", "No AFS path selected");
+                return;
+            }
+            
             try
             {
-                byte[] data = AFS.Pack(textbox_listFile.Text, textbox_inputFolder.Text);
-                stream.Write(data, 0, (int)data.Length);
-                stream.Close();
+                using (FileStream stream = new FileStream(textbox_exportedAfs.Text, FileMode.Create, FileAccess.Write))
+                {
+                    byte[] data = AFS.Pack(textbox_listFile.Text, textbox_inputFolder.Text);
+                    stream.Write(data, 0, (int)data.Length);
+                }
                 MessageBox.Show("Exported " + textbox_exportedAfs.Text);
             }
             catch (Exception ex)
             {
-                stream.Close();
                 MessageBox.Show(ex.Message, "Error exporting AFS");
             }
         }
@@ -497,6 +517,68 @@ namespace Riven_Script_Editor
             }
         }
 
+        private void Menu_Import_Csv(object sender, RoutedEventArgs e)
+        {
+
+            if (listviewFiles.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a script file.", "No script file selected");
+                return;
+            }
+
+            string csvPath = null;
+
+            CommonOpenFileDialog dialog = new CommonOpenFileDialog("Import CSV");
+            dialog.Filters.Add(new CommonFileDialogFilter("CSV File", "*.csv;*.txt"));
+            if (dialog.ShowDialog() == CommonFileDialogResult.Ok)
+            {
+                csvPath = dialog.FileName;
+            }
+            else
+                return;
+
+            // bad. horrible. temporary. but it works. -chroi
+            try
+            {
+                using (var reader = new FileStream(csvPath, FileMode.Open))
+                {
+                    int i = 0;
+                    foreach (var line in CsvReader.ReadFromStream(reader))
+                    {
+                        while ((tokenList[i] is TokenMsgDisp2 == false || string.IsNullOrEmpty((tokenList[i] as TokenMsgDisp2).Message)) && i < tokenList.Count)
+                            i++;
+                        if (i > tokenList.Count)
+                            break;
+
+                        string newText = line[1];
+                        if (!string.IsNullOrEmpty(newText))
+                        {
+                            tokenList[i].GetType().GetProperty("Message").SetValue(tokenList[i], newText);
+                            tokenList[i].UpdateData();
+                            ChangedFile = true;
+                        }
+                        i++;
+                    }
+                }
+
+                if (TokenListView.SelectedItem != null)
+                    (TokenListView.SelectedItem as Token).UpdateGui(this);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private void Menu_Exit(object sender, RoutedEventArgs e)
+        {
+            var success = CheckUnsavedChanges();
+            if (!success)
+                return;
+
+            this.Close();
+        }
+
         private void ListView1_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (e.AddedItems.Count == 0)
@@ -514,13 +596,15 @@ namespace Riven_Script_Editor
             var success = CheckUnsavedChanges();
             if (!success)
                 return;
+            ChangedFile = false;
 
             filename = (string)args.AddedItems[0]; 
             string path_en = System.IO.Path.Combine(folder, filename);
-
-            
+                
             byte[] binData = File.ReadAllBytes(path_en);
-            if(filename.Equals("DATA.BIN"))
+    
+
+            if (filename.Equals("DATA.BIN"))
             {
                 Tokenizer = new DataTokenizer(new DataWrapper(binData));
             }
@@ -529,6 +613,33 @@ namespace Riven_Script_Editor
                 Tokenizer = new ScriptTokenizer(new DataWrapper(binData), scriptListFileManager);
             }
             tokenList = Tokenizer.ParseData();
+
+            string path_jp = System.IO.Path.Combine(textbox_inputFolderJp.Text, filename);
+            if (File.Exists(path_jp))
+            {
+                byte[] binDataJp = File.ReadAllBytes(path_jp);
+                ATokenizer TokenizerJp;
+
+                if (filename.Equals("DATA.BIN"))
+                {
+                    TokenizerJp = new DataTokenizer(new DataWrapper(binDataJp));
+                }
+                else
+                {
+                    TokenizerJp = new ScriptTokenizer(new DataWrapper(binDataJp), scriptListFileManager);
+                }
+                List<Token> tokenListJp = TokenizerJp.ParseData();
+
+                
+                for (int i=0; i < tokenList.Count; i++)
+                {
+                    // quick hack. just assumes indexes are the same. needs to change if we add line-adding functionality. -chroi
+                    Token token = tokenList[i];
+                    if (token is TokenMsgDisp2 tokenMsgDisp2)
+                        tokenMsgDisp2.MessageJp = ((TokenMsgDisp2)tokenListJp[i]).Message;
+                }
+            }
+
             ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
             ((MainWindow)Application.Current.MainWindow).Title = "12R Script: " + filename;
             DataContext = new CommandViewBox(tokenList.ToList());

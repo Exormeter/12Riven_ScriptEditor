@@ -63,7 +63,7 @@ namespace Riven_Script_Editor
             {
                 foreach (string filename in File.ReadAllLines(listFilePath).ToList())
                 {
-                    if (filename.Equals("DATA.BIN") || filename.Equals("Repi.BIN") || sceneNamePattern.IsMatch(filename))
+                    if (filename.Equals("DATA.BIN") || filename.Equals("Repi.BIN") || filename.Equals("Nepi.BIN") || sceneNamePattern.IsMatch(filename))
                     {
                         _displayedScriptNameFiles.Add(filename);
                     }
