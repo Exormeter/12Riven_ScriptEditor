@@ -8,7 +8,6 @@ namespace Riven_Script_Editor.Tokens
 {
     internal class TokenMovieStart : Token
     {
-        public new const TokenType Type = TokenType.movie_start;
 
         public MessagePointer MsgPtr;
 

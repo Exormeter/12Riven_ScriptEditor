@@ -4,7 +4,6 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenJump : Token
     {
-        public new const TokenType Type = TokenType.Loop_Cond;
         public Token ReferencedToken { get; set; }
 
         public TokenJump(Token token, Token referencedToken) : base(token)

@@ -7,8 +7,6 @@ namespace Riven_Script_Editor.Tokens
 {
     class TokenMsgDisp2 : Token
     {
-        public new const TokenType Type = TokenType.message;
-
         public MessagePointer MsgPtr;
 
         public string CompleteMessage 
@@ -38,7 +36,7 @@ namespace Riven_Script_Editor.Tokens
         private void init()
         {
             Splitable = "No";
-            MsgPtr = new MessagePointer(7, 6, _byteCommand);
+            MsgPtr = new MessagePointer(5, 4, _byteCommand);
             _description = "Displays text spoken by a character.\n" +
             "\nSpeaker ID: The sprite to animate" +
             "\n\nColor:\n%C<RGBA>\n(eg. %C8CFF would give cyan, %CF66A is a slightly transparent red. Return to white using %CFFFF)" +
@@ -91,9 +89,6 @@ namespace Riven_Script_Editor.Tokens
             }
             else
                 Message = CompleteMessage;
-
-            // Remove double spaces
-            // Message = Utility.StringSingleSpace(Message);
 
             UpdateData();
         }
