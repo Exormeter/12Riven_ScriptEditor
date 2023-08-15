@@ -26,8 +26,8 @@ namespace Riven_Script_Editor
 
     class DataTokenizer : ATokenizer
     {
-        private readonly int ptrSectionSize = 0x263f;
-        private readonly int trailerStart = 0x5ACD;
+        private readonly int ptrSectionSize = 0x2650;
+        private readonly int trailerStart = 0x5733;
         private readonly IntervalTree<int, Section> sectionTree = new IntervalTree<int, Section>();
         private Token trailerToken;
 
@@ -40,14 +40,30 @@ namespace Riven_Script_Editor
             sectionTree.Add(0xF20, 0x14BB, Section.DATA);
             sectionTree.Add(0x14BC, 0x1793, Section.SCENE_NAME);
             sectionTree.Add(0x1794, 0x1E37, Section.DATA2);
-            sectionTree.Add(0x1E38, 0x2443, Section.STRINGS);
-            sectionTree.Add(0x2444, 0x2447, Section.CHUNK);
-            sectionTree.Add(0x2448, 0x2537, Section.TITLE_NAME);
-            sectionTree.Add(0x2538, 0x253B, Section.CHUNK);
-            sectionTree.Add(0x253C, 0x261F, Section.STRINGS);
-            sectionTree.Add(0x2620, 0x2623, Section.CHUNK);
-            sectionTree.Add(0x2624, 0x262B, Section.STRINGS);
-            sectionTree.Add(0x262C, 0x263F, Section.FOOTER);
+
+            //sectionTree.Add(0x1E38, 0x2443, Section.STRINGS);
+            sectionTree.Add(0x1E38, 0x2453, Section.STRINGS);
+
+            //sectionTree.Add(0x2444, 0x2447, Section.CHUNK);
+            sectionTree.Add(0x2454, 0x2457, Section.CHUNK);
+
+            //sectionTree.Add(0x2448, 0x2537, Section.TITLE_NAME);
+            sectionTree.Add(0x2458, 0x2547, Section.TITLE_NAME);
+
+            //sectionTree.Add(0x2538, 0x253B, Section.CHUNK);
+            sectionTree.Add(0x2548, 0x254B, Section.CHUNK);
+
+            //sectionTree.Add(0x253C, 0x261F, Section.STRINGS);
+            sectionTree.Add(0x254C, 0x262F, Section.STRINGS);
+
+            //sectionTree.Add(0x2620, 0x2623, Section.CHUNK);
+            sectionTree.Add(0x2630, 0x2633, Section.CHUNK);
+
+            //sectionTree.Add(0x2624, 0x262B, Section.STRINGS);
+            sectionTree.Add(0x2634, 0x263B, Section.STRINGS);
+
+            //sectionTree.Add(0x262C, 0x263F, Section.FOOTER);
+            sectionTree.Add(0x263C, 0x264F, Section.FOOTER);
         }
 
         public override List<Token> ParseData()
