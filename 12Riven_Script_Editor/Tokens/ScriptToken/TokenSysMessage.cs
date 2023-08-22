@@ -15,7 +15,7 @@ namespace Riven_Script_Editor.Tokens
             set { sysPtr.Message = value; }
         }
 
-        public TokenSysMessage(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank = false) : base(wrapper, byteCommand, pos)
+        public TokenSysMessage(DataWrapper wrapper, int pos, bool blank = false) : base(wrapper, pos)
         {
             Splitable = "No";
             sysPtr = new MessagePointer(3, 2, _byteCommand);

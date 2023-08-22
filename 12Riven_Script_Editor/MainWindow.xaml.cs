@@ -687,20 +687,7 @@ namespace Riven_Script_Editor
         }
 
         private void ScriptSplitContextMenu_MouseUp(Object sender, System.EventArgs e) {
-            string breakoutScriptName = (string)listviewFiles.SelectedItem;
-            string[] scriptNameParts = breakoutScriptName.Split('.');
-            breakoutScriptName = scriptNameParts[0] + splittedFilenameEnding + "." + scriptNameParts[1];
-            byte scriptIndex = (byte)scriptListFileManager.AddFilename(breakoutScriptName);
-            var breakoutTokenList = tokenList.GetRange(TokenListView.SelectedIndex + 1, tokenList.Count - TokenListView.SelectedIndex - 1);
-            breakoutTokenList.Insert(0, tokenList[0]); //add copied header
-            var commandBytes = new byte[] {0x0B, 0x06, scriptIndex, 0x00 , 0x00, 0x00};
-            var callExtToken = new TokenExtGoto(null, commandBytes, 0, breakoutScriptName);
-            tokenList.Insert(TokenListView.SelectedIndex + 1, callExtToken);
-            tokenList.RemoveRange(TokenListView.SelectedIndex + 2, tokenList.Count() - TokenListView.SelectedIndex - 4);
-            DataContext = new CommandViewBox(tokenList);
-            ScriptSizeCounter.DataContext = new ScriptSizeNotifier(tokenList);
-            SaveFile(breakoutScriptName, Tokenizer.AssembleAsData(breakoutTokenList));
-            SaveFile((string)listviewFiles.SelectedItem, Tokenizer.AssembleAsData(tokenList));
+            
         }
 
         private void FixExGotoIndexes(int removedIndex)

@@ -111,8 +111,9 @@
     <Compile Include="Themes\DarkBlend\TreeViewItemExtensions.cs" />
     <Compile Include="Tokenizer\DataWrapper.cs" />
     <Compile Include="Tokenizer\ATokenizer.cs" />
-    <Compile Include="Tokens\TokenMovieStart.cs" />
-    <Compile Include="Tokens\TokenExtGoto.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenGraphDisp.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenMovieStart.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenExtGoto.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataRoute2.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataChunk.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataTitleName.cs" />
@@ -120,14 +121,13 @@
     <Compile Include="Tokens\DataBinToken\TokenDataRoute.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataSceneName.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataName.cs" />
-    <Compile Include="Tokens\TokenJump.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenJump.cs" />
     <Compile Include="Tokens\Token.cs" />
-    <Compile Include="Tokens\TokenHeader.cs" />
     <Compile Include="Tokenizer\ScriptTokenizer.cs" />
-    <Compile Include="Tokens\TokenSelectDisp2.cs" />
-    <Compile Include="Tokens\TokenSelectDisp.cs" />
-    <Compile Include="Tokens\TokenMsgDisp2.cs" />
-    <Compile Include="Tokens\TokenSysMessage.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenSelectDisp2.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenSelectDisp0x74.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenMsgDisp2.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenSysMessage.cs" />
     <Compile Include="Utility.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>

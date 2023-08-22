@@ -16,11 +16,6 @@ namespace Riven_Script_Editor.Tokens
             ReferencedToken = referencedToken;
         }
 
-        public TokenJump(DataWrapper dataWrapper, byte[] byteCommand, int offset, Token referencedToken) : base(dataWrapper, byteCommand, offset)
-        {
-            ReferencedToken = referencedToken;
-        }
-
         public UInt16 GetReferencedOffset()
         {
             return (UInt16)(_byteCommand[2] | _byteCommand[3] << 8);

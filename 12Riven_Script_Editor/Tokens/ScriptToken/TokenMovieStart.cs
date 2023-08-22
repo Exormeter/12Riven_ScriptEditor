@@ -29,14 +29,6 @@ namespace Riven_Script_Editor.Tokens
             Data2 = MovieFileName;
         }
 
-        public TokenMovieStart(DataWrapper dataWrapper, byte[] byteCommand, int offset) : base(dataWrapper, byteCommand, offset)
-        {
-            MsgPtr = new MessagePointer(3, 2, _byteCommand);
-            MessagePointerList.Add(MsgPtr);
-            MovieFileName = _dataWrapper.ReadString(MsgPtr.MsgPtrString);
-            Data2 = MovieFileName;
-        }
-
         public override byte[] GetMessagesBytes()
         {
             byte[] msg = Utility.StringEncode(MovieFileName);

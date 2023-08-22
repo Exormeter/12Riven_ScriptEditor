@@ -8,24 +8,24 @@ namespace Riven_Script_Editor.Tokens
     {
         public List<SelectDisp2Entry> Entries = new List<SelectDisp2Entry>();
 
-        public TokenSelectDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank=false): base(wrapper, byteCommand, pos)
+        public TokenSelectDisp2(DataWrapper wrapper, int pos, bool blank=false): base(wrapper, pos)
         {
             Splitable = "No";
             _command = "Select Disp2";
             _description = "Display choices (version 2)";
 
 
-            for (int i = 8; i < byteCommand.Length; i += 8)
-            {
-                var entry = new SelectDisp2Entry();
-                //entry.MsgPtr = BitConverter.ToUInt16(byteCommand, i);
-                MessagePointerList.Add(new MessagePointer(i + 1, i, _byteCommand));
-                entry.choisePointer = MessagePointerList[MessagePointerList.Count - 1];
-                entry.Message = _dataWrapper.ReadString(MessagePointerList[MessagePointerList.Count - 1].MsgPtrString);
-                // Remove double spaces
-                //entry.TempMsg = Utility.StringSingleSpace(entry.Message);
-                Entries.Add(entry);
-            }
+            //for (int i = 8; i < byteCommand.Length; i += 8)
+            //{
+            //    var entry = new SelectDisp2Entry();
+            //    //entry.MsgPtr = BitConverter.ToUInt16(byteCommand, i);
+            //    MessagePointerList.Add(new MessagePointer(i + 1, i, _byteCommand));
+            //    entry.choisePointer = MessagePointerList[MessagePointerList.Count - 1];
+            //    entry.Message = _dataWrapper.ReadString(MessagePointerList[MessagePointerList.Count - 1].MsgPtrString);
+            //    // Remove double spaces
+            //    //entry.TempMsg = Utility.StringSingleSpace(entry.Message);
+            //    Entries.Add(entry);
+            //}
             
             
             UpdateData();

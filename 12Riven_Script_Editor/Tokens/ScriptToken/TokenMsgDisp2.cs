@@ -22,7 +22,7 @@ namespace Riven_Script_Editor.Tokens
 
         static Regex terminator_regex = new Regex(@"(%[%ABCDEKNPpSTV0-9]*?)$");
 
-        public TokenMsgDisp2(DataWrapper wrapper, byte[] byteCommand, int pos, bool blank = false) : base(wrapper, byteCommand, pos)
+        public TokenMsgDisp2(DataWrapper wrapper, int pos, bool blank = false) : base(wrapper, pos)
         {
             
             init();

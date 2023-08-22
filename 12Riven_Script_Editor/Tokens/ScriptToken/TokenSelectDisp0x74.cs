@@ -4,26 +4,28 @@ using System.Text;
 
 namespace Riven_Script_Editor.Tokens
 {
-    class TokenSelectDisp : Token
+    class TokenSelectDisp0x74 : Token
     {
         
         byte num_entries;
         UInt16 fixed1;
         public List<SelectDispEntry> Entries = new List<SelectDispEntry>();
 
-        public TokenSelectDisp(DataWrapper wrapper, byte[] byteCommand, int pos): base(wrapper, byteCommand, pos)
+        public TokenSelectDisp0x74(DataWrapper wrapper, int pos): base(wrapper, pos)
         {
-            Splitable = "No";
-            _command = "Select Disp";
+            _length += _byteCommand[1] * 8;
+            _byteCommand = wrapper.Slice(pos, _length);
+            Data = Utility.ToString(_byteCommand);
+
             _description = "Display choices [@TODO: Fix jump/label handling]";
-            num_entries = _dataWrapper.ReadUInt8(1);
+            num_entries = _byteCommand[1];
 
-            fixed1 = 0x6009;
+            //fixed1 = 0x6009;
 
-            for (int i=0; i<num_entries; i++)
+            for (int i = 0; i < num_entries; i++)
             {
                 var entry = new SelectDispEntry();
-                entry.MsgPtr = _dataWrapper.ReadUInt16(i * 8 + 4);
+                entry.MsgPtr = _dataWrapper.ReadUInt16(pos + 6 + (i * 8));
                 entry.JumpAddress = _dataWrapper.ReadUInt16(i * 8 + 6);
                 entry.Unknown = _dataWrapper.ReadUInt16(i * 8 + 8);
                 entry.ChoiceId = _dataWrapper.ReadUInt16(i * 8 + 10);
@@ -32,7 +34,7 @@ namespace Riven_Script_Editor.Tokens
                 Entries.Add(entry);
             }
 
-            //UpdateData();
+            UpdateData();
         } 
         public override string GetMessages()
         {
@@ -80,7 +82,6 @@ namespace Riven_Script_Editor.Tokens
 
         public override void UpdateData()
         {
-            _length = 4 + 8 * Entries.Count;
             Data = "Choices: " + Entries.Count.ToString();
 
             for (int i = 0; i < Entries.Count; i++)
@@ -103,9 +104,9 @@ namespace Riven_Script_Editor.Tokens
                 base.UpdateGui(window, false);
                 var e = (SelectDispEntry)ev.AddedItems[0];
                 AddTextbox(window, "Message", "Message", e);
-                AddUint16(window, "JumpAddress", "Unknown1", e);
-                AddUint16(window, "Unknown", "Unknown", e);
-                AddUint16(window, "Choice ID", "ChoiceId", e);
+                //AddUint16(window, "JumpAddress", "Unknown1", e);
+                //AddUint16(window, "Unknown", "Unknown", e);
+                //AddUint16(window, "Choice ID", "ChoiceId", e);
             });
         }
     }

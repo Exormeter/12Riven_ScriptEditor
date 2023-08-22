@@ -64,7 +64,7 @@ namespace Riven_Script_Editor
                 {
                     case Section.HEADER:
                         byteCommand = data.RawArray.Skip(pos).Take(Convert.ToInt32(data[pos])).ToArray();
-                        tokens.Add(new TokenHeader(data, byteCommand, pos));
+                        //tokens.Add(new TokenHeader(data, byteCommand, pos));
                         break;
 
                     case Section.NAMES:
@@ -81,7 +81,7 @@ namespace Riven_Script_Editor
 
                     case Section.DATA:
                         byteCommand = data.RawArray.Skip(pos).Take(1436).ToArray();
-                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1436));
+                        //tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1436));
                         break;
 
                     case Section.SCENE_NAME:
@@ -90,7 +90,7 @@ namespace Riven_Script_Editor
 
                     case Section.DATA2:
                         byteCommand = data.RawArray.Skip(pos).Take(1700).ToArray();
-                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1700));
+                        //tokens.Add(new TokenDataChunk(data, byteCommand, pos, 1700));
                         break;
 
                     case Section.STRINGS:
@@ -103,12 +103,12 @@ namespace Riven_Script_Editor
 
                     case Section.CHUNK:
                         byteCommand = data.RawArray.Skip(pos).Take(4).ToArray();
-                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 4));
+                        //tokens.Add(new TokenDataChunk(data, byteCommand, pos, 4));
                         break;
 
                     case Section.FOOTER:
                         byteCommand = data.RawArray.Skip(pos).Take(24).ToArray();
-                        tokens.Add(new TokenDataChunk(data, byteCommand, pos, 24));
+                        //tokens.Add(new TokenDataChunk(data, byteCommand, pos, 24));
                         break;
                 }
 
@@ -118,7 +118,7 @@ namespace Riven_Script_Editor
 
             int trailerLenght = data.RawArray.Length - trailerStart;
             byteCommand = data.RawArray.Skip(trailerStart).Take(trailerLenght).ToArray();
-            trailerToken = new Token(data, byteCommand, 0);
+            //trailerToken = new Token(data, byteCommand, 0);
             return tokens;
         }
 

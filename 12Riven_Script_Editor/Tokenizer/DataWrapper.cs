@@ -74,5 +74,12 @@ namespace Riven_Script_Editor.Tokens
             // This is a Shift-JIS string, decode it
             return Utility.StringDecode(buffer);
         }
+
+        public byte[] Slice(int pos, int length)
+        {
+            byte[] buffer = new byte[length];
+            Array.Copy(data, pos, buffer, 0, length);
+            return buffer;
+        }
     }
 }
