@@ -8,10 +8,16 @@ namespace Riven_Script_Editor.Tokens
 {
     internal class TokenExtGoto : Token
     {
-        public string referencedFilename { get; set; }
-        public TokenExtGoto(DataWrapper dataWrapper, int offset, string referencedFilename) : base(dataWrapper, offset)
+        
+        public TokenExtGoto(DataWrapper dataWrapper, int offset) : base(dataWrapper, offset)
         {
-            this.referencedFilename = referencedFilename;
+            while (dataWrapper[offset + Length] == 0x00)
+            {
+                this._length++;
+            }
+            _byteCommand = dataWrapper.RawArray.Skip(offset).Take(_length).ToArray();
+            Data = Utility.ToString(_byteCommand);
+
         }
     }
 }

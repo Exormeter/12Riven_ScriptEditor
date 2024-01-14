@@ -22,9 +22,9 @@ namespace Riven_Script_Editor.Tokens
 {
     class ScriptTokenizer : ATokenizer
     {
-        private Token trailerToken;
         private bool _changed_file;
         private int pos;
+        private LzssCompress compressor = new LzssCompress();
 
         public bool ChangedFile
         {
@@ -44,30 +44,34 @@ namespace Riven_Script_Editor.Tokens
         public ScriptTokenizer(DataWrapper wrapper, ScriptListFileManager scriptListFileManager) : base(wrapper)
         {
             _listFileManager = scriptListFileManager;
+
+            byte[] decompressedData = compressor.Decompress(data.Slice(4, data.RawArray.Length - 4)); //LZSS0 compression starts at offset 4
+            data = new DataWrapper(decompressedData);
         }
 
         public override List<Token> ParseData()
         {
+
             var tokens = new List<Token>();
             pos = 0;
 
             int lenght = Convert.ToInt32(data[pos]);
 
-            while(true)
+            while (true)
             {
                 Token token = ReadNextToken(tokens);
                 pos += token.Length;
 
-                
+
                 tokens.Add(token);
-                
-                if(token.OpCode == 0x06 || token.OpCode == 0x01)
+
+                if (token.OpCode == 0x06 || token.OpCode == 0x01)
                 {
                     break;
                 }
             }
 
-            foreach(Token t in tokens.Where(token => token is TokenJump))
+            foreach (Token t in tokens.Where(token => token is TokenJump))
             {
                 TokenJump jumpToken = (TokenJump)t;
 
@@ -86,15 +90,13 @@ namespace Riven_Script_Editor.Tokens
             TokenMsgDisp2 lastMsgToken = (TokenMsgDisp2)tokens.Last(tempToken => tempToken is TokenMsgDisp2);
 
             int trailerStart = lastMsgToken.MsgPtr.MsgPtrString + lastMsgToken.GetMessagesBytes().Length;
-            int trailerLenght = data.RawArray.Length - trailerStart;
-            //byteCommand = data.RawArray.Skip(trailerStart).Take(trailerLenght).ToArray();
-            //trailerToken = new Token(data, byteCommand, 0);
-            //tokens.Add(trailerToken);
+            var trailerToken = new ScriptToken.TokenTrailer(data, trailerStart);
+            tokens.Add(trailerToken);
             return tokens;
         }
 
         public override byte[] AssembleAsData(List<Token> tokens)
-         {
+        {
             int offsetTextSection = 0;
             int pos = 0;
             Stream stream = new MemoryStream();
@@ -104,6 +106,14 @@ namespace Riven_Script_Editor.Tokens
             //padding with 0 until textSection begins
             byte[] fill = new Byte[offsetTextSection];
             stream.Write(fill, 0, fill.Length);
+
+            // data at the end of the script behind the text section
+            ScriptToken.TokenTrailer lastToken = null;
+            if (tokens.Last() is ScriptToken.TokenTrailer)
+            {
+                lastToken = (ScriptToken.TokenTrailer)tokens.Last();
+                tokens.RemoveAt(tokens.Count - 1);
+            }
 
             foreach (var token in tokens)
             {
@@ -123,15 +133,18 @@ namespace Riven_Script_Editor.Tokens
                 pos += token.Length;
             }
 
-            stream.Seek(0, SeekOrigin.End);
-            byte[] trailerBuffer = trailerToken.ByteCommand;
-            stream.Write(trailerBuffer, 0, trailerBuffer.Length);
-
+            if (lastToken != null)
+            {
+                stream.Seek(0, SeekOrigin.End);
+                stream.Write(lastToken.ByteCommand, 0, lastToken.ByteCommand.Length);
+            }
             // Copy the stream to a byte array
             stream.Seek(0, SeekOrigin.Begin);
             byte[] output = new byte[stream.Length];
             stream.Read(output, 0, (int)stream.Length);
-            return output;
+
+            //return output;
+            return compressor.Compress(output);
         }
 
         public override byte[] AssembleAsText(string title, List<Token> tokens)
@@ -191,6 +204,7 @@ namespace Riven_Script_Editor.Tokens
 
             switch (opcode.opcodeByte) 
             {
+                case 0x06: return new TokenExtGoto(data, pos);
                 case 0x33: return new ScriptToken.TokenGraphDisp(data, pos);
                 case 0x73: return new TokenMsgDisp2(data, pos);
                 case 0x74: return new TokenSelectDisp0x74(data, pos);

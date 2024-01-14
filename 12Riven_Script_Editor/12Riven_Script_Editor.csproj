@@ -122,6 +122,7 @@
     <Compile Include="Tokens\DataBinToken\TokenDataSceneName.cs" />
     <Compile Include="Tokens\DataBinToken\TokenDataName.cs" />
     <Compile Include="Tokens\ScriptToken\TokenJump.cs" />
+    <Compile Include="Tokens\ScriptToken\TokenTrailer.cs" />
     <Compile Include="Tokens\Token.cs" />
     <Compile Include="Tokenizer\ScriptTokenizer.cs" />
     <Compile Include="Tokens\ScriptToken\TokenSelectDisp2.cs" />

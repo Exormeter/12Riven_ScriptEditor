@@ -97,7 +97,7 @@ namespace Riven_Script_Editor.Tokens
             new Opcode("int_goto", 0x03, 4), // probably 4
             new Opcode("int_call", 0x04, 4), // probably 4
             new Opcode("int_return", 0x05, 0xFF),
-            new Opcode("ext_goto", 0x06, 12),
+            new Opcode("ext_goto", 0x06, 4),
             new Opcode("ext_call", 0x07, 12),
             new Opcode("ext_return", 0x08, 2),
             new Opcode("reg_calc", 0x09, 6),
@@ -236,12 +236,15 @@ namespace Riven_Script_Editor.Tokens
         public Token(DataWrapper dataWrapper, int offset)
         {
             _opCode = dataWrapper[offset];
-            _length = OpcodeList[_opCode].length;
-            _byteCommand = dataWrapper.RawArray.Skip(offset).Take(_length).ToArray();
-            _command = OpcodeList[_opCode].name;
-            _offset = offset;
-            _dataWrapper = dataWrapper;
-            Data = Utility.ToString(_byteCommand);
+            if (_opCode <= OpcodeList.Count)
+            {
+                _length = OpcodeList[_opCode].length;
+                _byteCommand = dataWrapper.RawArray.Skip(offset).Take(_length).ToArray();
+                _command = OpcodeList[_opCode].name;
+                _offset = offset;
+                _dataWrapper = dataWrapper;
+                Data = Utility.ToString(_byteCommand);
+            }
         }
 
         public Token(Token token)

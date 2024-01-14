@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -255,6 +256,76 @@ namespace Riven_Script_Editor.FileTypes
             dad[q] = dad[p];
             if (rson[dad[p]] == p) rson[dad[p]] = q; else lson[dad[p]] = q;
             dad[p] = NIL;
+        }
+
+        public byte[] Decompress(byte[] input)
+        {
+            int EI = 12;    /* typically 10..13 */
+            int EJ = 4;     /* typically 4..5 */
+            int P = 2;     /* If match length <= P then output one character */
+            int N;
+            int F;
+            int rless = P;  // in some rare implementations it could be 0
+
+            byte[] slide_win = new byte[4096];
+            for (int index = 0; index < 4096; index++)
+            {
+                slide_win[index] = 0;
+            }
+            
+
+            int i, j, k, r, c;
+            uint flags;
+
+            int srcIdx = 0;
+            int srcSize = input.Length;
+
+            List<byte> output = new List<byte>();
+
+            
+            N = 1 << EI;
+            F = 1 << EJ;
+
+            r = (N - F) - rless;
+            N--;
+            F--;
+
+            for (flags = 0; ; flags >>= 1)
+            {
+                if (!((flags & 0x100) != 0))
+                {
+                    if (srcIdx >= srcSize) break;
+                    flags = input[srcIdx++];
+                    flags |= 0xff00;
+                }
+                if ((flags & 1) != 0)
+                {
+                    if (srcIdx >= srcSize) break;
+                    c = input[srcIdx++];
+                    output.Add((byte)c);
+                    slide_win[r] = (byte)c;
+                    r = (r + 1) & N;
+                }
+                else
+                {
+                    if (srcIdx >= srcSize) break;
+                    i = input[srcIdx++];
+                    if (srcIdx >= srcSize) break;
+                    j = input[srcIdx++];
+                    i |= ((j >> EJ) << 8);
+                    j = (j & F) + P;
+                    for (k = 0; k <= j; k++)
+                    {
+                        c = slide_win[(i + k) & N];
+
+                        output.Add((byte)c);
+                        slide_win[r] = (byte)c;
+                        r = (r + 1) & N;
+                    }
+                }
+            }
+
+            return output.ToArray();
         }
     }
 }
